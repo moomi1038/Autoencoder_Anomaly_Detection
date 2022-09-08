@@ -1,8 +1,10 @@
-# from ast import Param
+from ast import Global
 import os
+from pickle import TRUE
+from re import A
 from PyQt6 import uic
 from PyQt6.QtGui import *
-from PyQt6.QtWidgets import QApplication, QMainWindow
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from matplotlib import pyplot as plt
@@ -29,16 +31,15 @@ TRAIN_STATUS = False # True : training , False : Trained(default)
 TEST_STATUS = True # True : testing, False : Not Testing(default)
 RECORD_STATUS = True # True : recording, False : not recording
 STATUS = True # True : normal, False : abnormal
-MODULE_STATUS = True # True : plc connect False : disconnect
-RECORD_DATA = None
-TRAIN_TOTAL = 1200 # sec
+PLC_STATUS = False # True : plc connected, False : not connected
+RESTART_STATUS = False
+PLC_READY = False
+RECORD_DATA = None # None for graph check
+TRAIN_TOTAL = param["TRAIN_TOTAL"]  # sec
 GRAPH = "Log Mel"
 NOW = QDate.currentDate()
-PORT = str()
+PORT = False
 PLATFORM = str()
-PLC_STATUS = False
-PLC_BOOLEAN = True
-TEST_BOOLEAN = True
 PATIENCE = param["PATIENCE"]
 THRESHOLD_LOGMEL = param["THRESHOLD_LOGMEL"]
 form_class = uic.loadUiType("main.ui")[0]
@@ -48,14 +49,57 @@ form_class = uic.loadUiType("main.ui")[0]
 # 오류 발생시 => m3 번방에 1 => plc 초기화
 
 class real_time_plc(QThread):
+    send_data = pyqtSignal(object)
+
     def __init__(self, parent):
         super().__init__(parent)
+        self.check()
+
+    def run(self):
+        global PORT
+        global PLC_STATUS
+        global TEST_STATUS
+        global TRAIN_STATUS
+        global STATUS
+        global RESTART_STATUS
+        global PLATFORM
+        global PLC_READY
+        global ser
+        while True:
+            if not TRAIN_STATUS:
+                if PORT == False:
+                    self.check()
+                try:
+                    ser = serial.Serial(port = PORT, baudrate = 9600, timeout = 1)
+
+                    temp = '\x0501RSS0106%MW' + '003' +'\x04'
+                    temp = temp.encode()
+                    ser.write(temp)
+                    temp_result = ser.readline().decode('ascii')
+                    
+                    if temp_result[-2] == "0":
+                        PLC_STATUS = True
+                except:
+                    PLC_STATUS = False
+                    PORT = False
+                if (STATUS == False) and (PLC_STATUS == True):
+                    if temp_result[-2] == "0"  and (RESTART_STATUS == False) and (PLC_READY == False):
+                        ser.write(b'\x0501WSS0106%MW0030001\x04')
+                        PLC_READY = True
+                        sleep(0.5)
+                        
+                    elif temp_result[-2] == "0" and (PLC_READY == True):
+                        PLC_READY = False
+                        RESTART_STATUS = True
+                        STATUS = True
+                        self.send_data.emit(RESTART_STATUS)
+
+    def check(self):
         global PLATFORM
         global PORT
         global PLC_STATUS # plc 연결 성공 / 실패
         global PLC_BOOLEAN
         global ser
-        self.parent = parent
         list = sp.comports()
         plf = platform.system()
         try:
@@ -91,7 +135,6 @@ class real_time_plc(QThread):
                         if temp_result[0] == '\x06':
                             PLC_STATUS = True
                             break
-                        
                         else:
                             PLC_STATUS = False
 
@@ -100,35 +143,6 @@ class real_time_plc(QThread):
 
         except:
             PLC_STATUS = False
-
-    def run(self):
-        global PORT
-        global PLC_STATUS
-        global STATUS
-        global PLATFORM
-        global ser
-        global PLC_BOOLEAN
-        while True:
-            try:
-                ser = serial.Serial(port = PORT, baudrate = 9600, timeout = 1)
-
-                temp = '\x0501RSS0106%MW' + '003' +'\x04'
-                temp = temp.encode()
-                ser.write(temp)
-                temp_result = ser.readline().decode('ascii')
-                
-                # sleep(0.1)
-                if temp_result[-2] == "0":
-                    PLC_STATUS = True
-            except:
-                PLC_STATUS = False
-
-            if (STATUS == False) and (PLC_STATUS == True):
-                if temp_result[-2] == "0":
-                    # sleep(0.5)
-                    ser.write(b'\x0501WSS0106%MW0030001\x04')
-                    sleep(0.5)
-
 
 class real_time_label(QThread):
     def __init__(self,parent):
@@ -171,7 +185,7 @@ class real_time_label(QThread):
                 if PLC_STATUS == True:
                     self.parent.module_check_label.setText("모듈연결 정상")
                     self.parent.module_check_label.setStyleSheet("border-width: 2px; border-radius: 10px; background-color: rgb(5, 172, 230); color: rgb(255, 255, 255);")
-                
+                    
                 elif PLC_STATUS == False:
                     self.parent.module_check_label.setText("모듈연결 비정상!")
                     self.parent.module_check_label.setStyleSheet("border-width: 2px; border-radius: 10px; background-color: rgb(230, 5, 5); color: rgb(255, 255, 255);")
@@ -193,13 +207,14 @@ class real_time_record(QThread):
         global GRAPH
         global RECORD_DATA
         global PORT
-        while RECORD_STATUS:
-            try:
-                self.parent.statusBar().showMessage(f"SERIAL : {PORT} , RECORD STATUS : {RECORD_STATUS} , TRAIN STATUS : {TRAIN_STATUS} , TEST STATUS : {TEST_STATUS}")
-                RECORD_DATA = record.time_recording(RECORD_STATUS,GRAPH)
-                self.send_data.emit(RECORD_DATA)
-            except Exception as e:
-                print(e)
+        while True:
+            if RECORD_STATUS:
+                try:
+                    self.parent.statusBar().showMessage(f"SERIAL : {PORT} , RECORD STATUS : {RECORD_STATUS} , TRAIN STATUS : {TRAIN_STATUS} , TEST STATUS : {TEST_STATUS}")
+                    RECORD_DATA = record.time_recording(RECORD_STATUS,GRAPH)
+                    self.send_data.emit(RECORD_DATA)
+                except Exception as e:
+                    print(e)
 
     def stop(self):
         self.exit()
@@ -215,14 +230,13 @@ class real_time_test(QThread):
     def run(self):
         global STATUS
         global TEST_STATUS
-        global TEST_BOOLEAN
         global RECORD_DATA
         global TRAIN_STATUS
         global THRESHOLD_LOGMEL
         global PATIENCE
         global count 
         count = 0
-        while TEST_BOOLEAN:
+        while True:
             try:
                 if TEST_STATUS:
                     if not TRAIN_STATUS:
@@ -237,6 +251,7 @@ class real_time_test(QThread):
                                 if count == PATIENCE:
                                     STATUS = False
                                     TEST_STATUS = False
+                                    count = 0
                             else:
                                 count = 0
                             end = time()
@@ -250,7 +265,7 @@ class real_time_test(QThread):
         self.exit()
         self.wait(300)
 
-class real_time_train(QThread): # 해야함
+class real_time_train(QThread): 
     send_data = pyqtSignal(object)
     
     def __init__(self,parent):
@@ -265,26 +280,26 @@ class real_time_train(QThread): # 해야함
         global RECORD_DATA
         csv_len = (param["TRAIN_TOTAL"] / param["PYAUDIO_SECONDS"])
         count = 0
-        while TRAIN_STATUS:
-            try:
-                TEST_STATUS = False
-                if RECORD_DATA is not None:
-                    if count != csv_len:
-                        train.save_csv(RECORD_DATA, count, GRAPH)
-                        count += 1
-                        progress_value = int(count / csv_len * 100)
-                        self.parent.progressBar.setValue(progress_value)
+        while True:
+            if TRAIN_STATUS:
+                try:
+                    TEST_STATUS = False
+                    if RECORD_DATA is not None:
+                        if count != csv_len:
+                            train.save_csv(RECORD_DATA, count, GRAPH)
+                            count += 1
+                            progress_value = int(count / csv_len * 100)
+                            self.parent.progressBar.setValue(progress_value)
 
-                        RECORD_DATA = None
-                        
-                    else:    
-                        train.train_run(GRAPH)
-                        result = validation.validation_run(GRAPH)
-                        TRAIN_STATUS = False
-                        self.send_data.emit(result)
-                        # TEST_STATUS = True
-            except Exception as e:
-                print(e)
+                            RECORD_DATA = None
+                            
+                        else:
+                            train.train_run(GRAPH)
+                            result = validation.validation_run(GRAPH)
+                            TRAIN_STATUS = False
+                            self.send_data.emit(result)
+                except Exception as e:
+                    print(e)
                 
     def stop(self):
         self.exit()
@@ -313,19 +328,18 @@ class gui(QMainWindow, form_class):
         self.real_label.start()
 
         self.real_plc = real_time_plc(self)
+        self.real_plc.send_data.connect(self.restartEvent)
         self.real_plc.start()
-        
+
     def graph(self, data):
         global GRAPH
-
-        self.fig = plt.Figure()
-        self.canvas = FigureCanvas(self.fig)
-
+        s = time()
         if self.mat.itemAt(0) is not None:
             self.mat.itemAt(0).widget().setParent(None)
-
+        self.fig = plt.Figure()
+        self.canvas = FigureCanvas(self.fig)
         self.mat.addWidget(self.canvas)
-
+        
         self.ax = self.fig.add_subplot(111)
 
         if GRAPH == 'Log Mel':
@@ -340,14 +354,17 @@ class gui(QMainWindow, form_class):
         self.ax.set_xlabel("Time frame")
         self.ax.set_ylabel("Frequency")
         self.fig.colorbar(graph, format="%+2.0f dB")
-
+        e = time()
+        print("graph_time  : ",e-s)
+        
     def sec_setting(self):
         global GRAPH
         global TEST_STATUS
+        global RECORD_STATUS
         global RECORD_DATA
         global param
         TEST_STATUS = False
-        self.real_record.stop()
+        RECORD_STATUS = False
         time_sec = self.setting_sec_combobox.currentText()
 
         param["PYAUDIO_SECONDS"] = int(time_sec)
@@ -355,16 +372,17 @@ class gui(QMainWindow, form_class):
             yaml.dump(param, file, default_flow_style=False)
         
         RECORD_DATA = None
-        self.real_record.start()
+        RECORD_STATUS = True
         TEST_STATUS = True
 
     def error_check(self, boolean):
         global STATUS
+        global TEST_STATUS
         if boolean:
             STATUS = True
         else:
             STATUS = False
-            self.real_test.stop()
+            TEST_STATUS = False
             
 
 #### VALUE ####
@@ -440,18 +458,29 @@ class gui(QMainWindow, form_class):
         TRAIN_STATUS = boolean
         if TRAIN_STATUS:
             TEST_STATUS = False
-            self.real_test.stop()
             self.real_train.start()
 
         else:
-            self.real_train.stop()
-
+            TRAIN_STATUS = False
             TEST_STATUS = True
-            self.real_test.start()
-            # 파일삭제
             for file in os.scandir(param["DIR_NAME_TRAIN_LOGMEL"]):
                 os.remove(file.path)
 
+    def restartEvent(self, boolean):
+        global RESTART_STATUS
+        global STATUS
+        global TEST_STATUS
+        if boolean:
+            reply = QMessageBox.question(self, 'Message',
+                        "다시 시작", QMessageBox.StandardButton.Yes |
+                        QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+
+            if reply == QMessageBox.StandardButton.Yes:
+                RESTART_STATUS = False
+                STATUS = True
+                TEST_STATUS = True
+            else:
+                sys.exit()
 #### UINIT ####
     def UIinit(self):
         #### CLICKED ####
@@ -481,10 +510,11 @@ class gui(QMainWindow, form_class):
         self.time_label.setText(NOW.toString(Qt.DateFormat.ISODate))
         self.statusbar.setStyleSheet("QStatusBar{padding-left:8px;color:white}")
         self.setting_patience_label.setText(str(param["PATIENCE"]))
+        self.setting_train_label.setText(str(int(param["TRAIN_TOTAL"]/60)))
 
         #### SLIDER ####
         self.setting_patience_slider.setValue(int(param["PATIENCE"]))
-
+        self.setting_train_slider.setValue(int(param["TRAIN_TOTAL"]/60))
 if __name__ == "__main__" :
     app = QApplication(sys.argv)
     myWindow = gui()
