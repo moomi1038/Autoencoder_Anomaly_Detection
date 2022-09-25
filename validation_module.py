@@ -8,7 +8,7 @@ from sklearn.metrics import precision_recall_curve
 import numpy as np
 from tqdm import tqdm
 import keras_model
-import train
+import train_module
 import yaml
 
 with open("param.yaml") as f:

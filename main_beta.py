@@ -1,7 +1,4 @@
-from ast import Global
 import os
-from pickle import TRUE
-from re import A
 from PyQt6 import uic
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
@@ -19,10 +16,10 @@ import psutil
 import platform
 from time import sleep, time
 
-import record
-import train
-import test
-import validation
+import record_module 
+import train_module
+import test_module
+import validation_module
 
 with open("param.yaml") as f: 
     param = yaml.load(f, Loader=yaml.FullLoader)
@@ -211,7 +208,7 @@ class real_time_record(QThread):
             if RECORD_STATUS:
                 try:
                     self.parent.statusBar().showMessage(f"SERIAL : {PORT} , RECORD STATUS : {RECORD_STATUS} , TRAIN STATUS : {TRAIN_STATUS} , TEST STATUS : {TEST_STATUS}")
-                    RECORD_DATA = record.time_recording(RECORD_STATUS,GRAPH)
+                    RECORD_DATA = record_module.time_recording(RECORD_STATUS,GRAPH)
                     self.send_data.emit(RECORD_DATA)
                 except Exception as e:
                     print(e)
@@ -242,7 +239,7 @@ class real_time_test(QThread):
                     if not TRAIN_STATUS:
                         if RECORD_DATA is not None:
                             start = time()
-                            result = test.test_run(RECORD_DATA,GRAPH,THRESHOLD_LOGMEL)
+                            result = test_module.test_run(RECORD_DATA,GRAPH,THRESHOLD_LOGMEL)
 
                             RECORD_DATA = None
 
@@ -286,7 +283,7 @@ class real_time_train(QThread):
                     TEST_STATUS = False
                     if RECORD_DATA is not None:
                         if count != csv_len:
-                            train.save_csv(RECORD_DATA, count, GRAPH)
+                            train_module.save_csv(RECORD_DATA, count, GRAPH)
                             count += 1
                             progress_value = int(count / csv_len * 100)
                             self.parent.progressBar.setValue(progress_value)
@@ -294,8 +291,8 @@ class real_time_train(QThread):
                             RECORD_DATA = None
                             
                         else:
-                            train.train_run(GRAPH)
-                            result = validation.validation_run(GRAPH)
+                            train_module.train_run(GRAPH)
+                            result = validation_module.validation_run(GRAPH)
                             TRAIN_STATUS = False
                             self.send_data.emit(result)
                 except Exception as e:

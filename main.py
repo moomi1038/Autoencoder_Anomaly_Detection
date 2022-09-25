@@ -1,7 +1,4 @@
-from ast import Global
 import os
-from pickle import TRUE
-from re import A
 from PyQt6 import uic
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
