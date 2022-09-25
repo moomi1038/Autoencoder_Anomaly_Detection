@@ -50,3 +50,5 @@ def port_error_message():
             return True
         else:
             return False
+    except:
+        return False
