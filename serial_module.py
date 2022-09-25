@@ -33,7 +33,7 @@ def port_init():
             except:
                 continue
 
-    ### For memory leak
+    #### For memory leak
     del port_temp
     del result 
     del list_port
@@ -52,3 +52,6 @@ def port_error_message():
             return False
     except:
         return False
+
+    #### For memory leak
+    del result
