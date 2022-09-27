@@ -1,13 +1,10 @@
 import os
 from PyQt6 import uic
-from PyQt6.QtGui import *
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
+from PyQt6.QtCore import QDate, QThread, pyqtSignal,Qt
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-import serial
-import serial.tools.list_ports as sp
 import librosa
 import librosa.display
 import sys
@@ -16,29 +13,38 @@ import psutil
 import platform
 from time import sleep, time
 
-import record
-import train
-import test
-import validation
+import record_module 
+import train_module
+import test_module
+import validation_module
+import serial_module
 
 with open("param.yaml") as f: 
     param = yaml.load(f, Loader=yaml.FullLoader)
 
-TRAIN_STATUS = False # True : training , False : Trained(default)
-TEST_STATUS = True # True : testing, False : Not Testing(default)
-RECORD_STATUS = True # True : recording, False : not recording
-STATUS = True # True : normal, False : abnormal
-PLC_STATUS = False # True : plc connected, False : not connected
-RESTART_STATUS = False
-PLC_READY = False
-RECORD_DATA = None # None for graph check
-TRAIN_TOTAL = param["TRAIN_TOTAL"]  # sec
-GRAPH = "Log Mel"
-NOW = QDate.currentDate()
-PORT = False
-PLATFORM = str()
-PATIENCE = param["PATIENCE"]
-THRESHOLD_LOGMEL = param["THRESHOLD_LOGMEL"]
+TOTAL_STATUS = {
+    "TRAIN_STATUS" : False, # True : training , False : Trained(default)
+    "REAL_TRAIN_STATUS" : False,
+    "VALIDATION_STATUS" : False,
+    "TEST_STATUS" : True, # True : testing, False : Not Testing(default)
+    "RECORD_STATUS" : True, # True : recording, False : not recording
+    "NORMAL_STATUS" : True, # True : normal, False : abnormal
+    "PLC_STATUS" : False # True : plc connected, False : not connected
+}
+
+TOTAL_DATA = {
+    "PLC_PORT" : None, # PLC PORT
+    "PLF" : None,
+    "RECORD_DATA" : None,
+    "NOW" : QDate.currentDate(),
+    "STYLE_NORMAL_WHITE" : "border-width: 2px; border-radius: 10px; background-color: rgb(5, 172, 230); color: rgb(255, 255, 255);",
+    "STYLE_ABNORMAL_WHITE" : "border-width: 2px; border-radius: 10px; background-color: rgb(230, 5, 5); color: rgb(255, 255, 255);",
+    "STYLE_ING_WHITE" : "border-width: 2px; border-radius: 10px; background-color: rgb(5, 172, 230); color: rgb(255, 255, 255);",
+    "STYLE_NORMAL_BLACK" : "border-width: 2px; border-radius: 10px; background-color: rgb(5, 172, 230); color: rgb(0, 0, 0);",
+    "STYLE_ABNORMAL_BLACK" : "border-width: 2px; border-radius: 10px; background-color: rgb(230, 5, 5); color: rgb(0, 0, 0);",
+    "STYLE_ING_BLACK" : "border-width: 2px; border-radius: 10px; background-color: rgb(5, 172, 230); color: rgb(0, 0, 0);"
+}
+
 form_class = uic.loadUiType("main.ui")[0]
 
 # m1 번방은 오류 없으면 항상 1 => 초록불
@@ -48,98 +54,29 @@ form_class = uic.loadUiType("main.ui")[0]
 class real_time_plc(QThread):
     send_data = pyqtSignal(object)
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.check()
+    def __init__(self):
+        super().__init__()
+        self.check
 
     def run(self):
-        global PORT
-        global PLC_STATUS
-        global TEST_STATUS
-        global TRAIN_STATUS
-        global STATUS
-        global RESTART_STATUS
-        global PLATFORM
-        global PLC_READY
-        global ser
         while True:
-            if not TRAIN_STATUS:
-                if PORT == False:
-                    self.check()
-                try:
-                    ser = serial.Serial(port = PORT, baudrate = 9600, timeout = 1)
-
-                    temp = '\x0501RSS0106%MW' + '003' +'\x04'
-                    temp = temp.encode()
-                    ser.write(temp)
-                    temp_result = ser.readline().decode('ascii')
-                    
-                    if temp_result[-2] == "0":
-                        PLC_STATUS = True
-                except:
-                    PLC_STATUS = False
-                    PORT = False
-                if (STATUS == False) and (PLC_STATUS == True):
-                    if temp_result[-2] == "0"  and (RESTART_STATUS == False) and (PLC_READY == False):
-                        ser.write(b'\x0501WSS0106%MW0030001\x04')
-                        PLC_READY = True
-                        sleep(0.5)
-                        
-                    elif temp_result[-2] == "0" and (PLC_READY == True):
-                        PLC_READY = False
-                        RESTART_STATUS = True
-                        STATUS = True
-                        self.send_data.emit(RESTART_STATUS)
+            if (TOTAL_STATUS["PLC_STATUS"] == True) and (TOTAL_STATUS["NORMAL_STATUS"] == False):
+                result = serial_module.port_error_message()
+                if result:
+                    print("Success")
+                else:
+                    print('Failed')
 
     def check(self):
-        global PLATFORM
-        global PORT
-        global PLC_STATUS # plc 연결 성공 / 실패
-        global PLC_BOOLEAN
-        global ser
-        list = sp.comports()
-        plf = platform.system()
         try:
-            for i in list:
-                tmp = str(i)
-                tmp = tmp.split(" ")
-                if plf == "Darwin":
-                    tmp = tmp[0]
-                
-                    if "usbserial" in tmp:
-                        ser = serial.Serial(port = tmp, baudrate = 9600, timeout = 1)
-                        temp = '\x0501RSS0106%MW' + '003' +'\x04'
-                        temp = temp.encode()
-                        ser.write(temp)
-                        temp_result = ser.readline().decode('ascii')
-
-                        if temp_result[0] == '\x06':
-                            PLC_STATUS = True
-                            break
-
-                        else:
-                            PLC_STATUS = False
-
-                elif plf == "Windows":
-                    tmp = tmp[0]
-                    if "COM" in tmp:
-                        ser = serial.Serial(port = tmp, baudrate = 9600, timeout = 1)
-                        temp = '\x0501RSS0106%MW' + '003' +'\x04'
-                        temp = temp.encode()
-                        ser.write(temp)
-                        temp_result = ser.readline().decode('ascii')
-                    
-                        if temp_result[0] == '\x06':
-                            PLC_STATUS = True
-                            break
-                        else:
-                            PLC_STATUS = False
-
-            PORT = tmp
-            PLATFORM = plf
-
+            result, plf, port = serial_module.port_init()
+            if result:
+                TOTAL_DATA["PLF"] = plf
+                TOTAL_DATA["PLC_PORT"] = port
+            
         except:
-            PLC_STATUS = False
+            TOTAL_DATA["PLC_PORT"] = None
+            TOTAL_STATUS["PLC_STATUS"] = False
 
 class real_time_label(QThread):
     def __init__(self,parent):
@@ -147,120 +84,109 @@ class real_time_label(QThread):
         self.parent = parent
 
     def run(self):
-        global STATUS
-        global TRAIN_STATUS
-        global PLC_STATUS
         while True:
             try:
-                cpu = str(psutil.cpu_percent(interval = 1)) 
-                ram = str(psutil.virtual_memory().used / 1024**3)
-                self.parent.cpu_usage.setText(cpu + " %")
-                self.parent.ram_usage.setText(f'{ram:.4}' + " GB")
-                if GRAPH == "Log Mel":
+                self.parent.statusBar().showMessage(f" SERIAL : {TOTAL_DATA['PLC_PORT']} , RECORD STATUS : {TOTAL_STATUS['RECORD_STATUS']} , TRAIN STATUS : {TOTAL_STATUS['TRAIN_STATUS']} , Validation STATUS : {TOTAL_STATUS['VALIDATION_STATUS']} ,REAL TRAIN STATUS : {TOTAL_STATUS['REAL_TRAIN_STATUS']} ,TEST STATUS : {TOTAL_STATUS['TEST_STATUS']}")
+
+                self.parent.cpu_usage.setText(str(psutil.cpu_percent(interval = 1)) + " %")
+                self.parent.ram_usage.setText(f'{str(psutil.virtual_memory().used / 1024**3):.4}' + " GB")
+                self.parent.time_label.setText(QDate.currentDate().toString(Qt.DateFormat.ISODate))
+
+                if param["GRAPH_TYPE"] == "Log Mel":
                     self.parent.setting_threshold_tot_label.setText(str(param["THRESHOLD_LOGMEL"]))
-                elif GRAPH == "STFT":
-                    self.parent.setting_threshold_tot_label.setText(str(param["THRESHOLD_STFT"]))
-                if STATUS == True:
+
+                if TOTAL_STATUS["NORMAL_STATUS"] == True:
                     self.parent.abnormal_check_label.setText("이상감지 정상")
-                    self.parent.abnormal_check_label.setStyleSheet("border-width: 2px; border-radius: 10px; background-color: rgb(5, 172, 230); color: rgb(255, 255, 255);")
-                elif STATUS == False:
+                    self.parent.abnormal_check_label.setStyleSheet(TOTAL_DATA["STYLE_NORMAL_WHITE"])
+
+                elif TOTAL_STATUS["NORMAL_STATUS"] == False:
                     self.parent.abnormal_check_label.setText("이상감지 비정상!")
-                    self.parent.abnormal_check_label.setStyleSheet("border-width: 2px; border-radius: 10px; background-color: rgb(230, 5, 5); color: rgb(255, 255, 255);")
+                    self.parent.abnormal_check_label.setStyleSheet(TOTAL_DATA["STYLE_ABNORMAL_WHITE"])
 
-                if TRAIN_STATUS == False:
+                if TOTAL_STATUS["TRAIN_STATUS"] == False:
                     self.parent.deep_check_label.setText("딥러닝 정상")
-                    self.parent.deep_check_label.setStyleSheet("border-width: 2px; border-radius: 10px; background-color: rgb(5, 172, 230); color: rgb(255, 255, 255);")
+                    self.parent.deep_check_label.setStyleSheet(TOTAL_DATA["STYLE_NORMAL_WHITE"])
 
-                elif TRAIN_STATUS == True:
+                elif TOTAL_STATUS["TRAIN_STATUS"] == True:
                     self.parent.deep_check_label.setText("녹음중!")
-                    self.parent.deep_check_label.setStyleSheet("border-width: 2px; border-radius: 10px; background-color: rgb(230, 5, 5); color: rgb(255, 255, 255);")
+                    self.parent.deep_check_label.setStyleSheet(TOTAL_DATA["STYLE_ING_WHITE"])
 
-                if TEST_STATUS == False and TRAIN_STATUS == True:
-                    self.parent.abnormal_check_label.setText("이상감지 학습중!")
-                    self.parent.abnormal_check_label.setStyleSheet("border-width: 2px; border-radius: 10px; background-color: rgb(5, 172, 230); color: rgb(255, 255, 255);")
+                if TOTAL_STATUS["TEST_STATUS"] == False and TOTAL_STATUS["TRAIN_STATUS"] == True:
+                    self.parent.abnormal_check_label.setText("이상감지 시스템 \n 학습중!")
+                    self.parent.abnormal_check_label.setStyleSheet(TOTAL_DATA["STYLE_ING_WHITE"])
 
-                if PLC_STATUS == True:
+                if TOTAL_STATUS["PLC_STATUS"] == True:
                     self.parent.module_check_label.setText("모듈연결 정상")
-                    self.parent.module_check_label.setStyleSheet("border-width: 2px; border-radius: 10px; background-color: rgb(5, 172, 230); color: rgb(255, 255, 255);")
+                    self.parent.module_check_label.setStyleSheet(TOTAL_DATA["STYLE_NORMAL_WHITE"])
                     
-                elif PLC_STATUS == False:
+                elif TOTAL_STATUS["PLC_STATUS"] == False:
                     self.parent.module_check_label.setText("모듈연결 비정상!")
-                    self.parent.module_check_label.setStyleSheet("border-width: 2px; border-radius: 10px; background-color: rgb(230, 5, 5); color: rgb(255, 255, 255);")
-            
+                    self.parent.module_check_label.setStyleSheet(TOTAL_DATA["STYLE_ABNORMAL_WHITE"])
+
+                if (TOTAL_STATUS["TRAIN_STATUS"] == True) and (TOTAL_STATUS["REAL_TRAIN_STATUS"] == True):
+                    self.parent.deep_check_label.setText("학습을 위해 \n 녹음 정지!")
+                    self.parent.deep_check_label.setStyleSheet(TOTAL_DATA["STYLE_ABNORMAL_WHITE"])
+
+                if (TOTAL_STATUS["REAL_TRAIN_STATUS"] == True) and (TOTAL_STATUS["VALIDATION_STATUS"] == True):
+                    self.parent.abnormal_check_label.setText("이상감지 학습 \n 검증중!")
+                    self.parent.abnormal_check_label.setStyleSheet(TOTAL_DATA["STYLE_ABNORMAL_WHITE"])
             except Exception as e:
-                print(e)
+                print("label e :", e)
 
 class real_time_record(QThread):
     send_data = pyqtSignal(object)
     
-    def __init__(self,parent):
-        super().__init__(parent)    
-        self.parent = parent
+    def __init__(self):
+        super().__init__()    
 
     def run(self):
-        global RECORD_STATUS
-        global TEST_STATUS
-        global TRAIN_STATUS
-        global GRAPH
-        global RECORD_DATA
-        global PORT
         while True:
-            if RECORD_STATUS:
-                try:
-                    self.parent.statusBar().showMessage(f"SERIAL : {PORT} , RECORD STATUS : {RECORD_STATUS} , TRAIN STATUS : {TRAIN_STATUS} , TEST STATUS : {TEST_STATUS}")
-                    RECORD_DATA = record.time_recording(RECORD_STATUS,GRAPH)
-                    self.send_data.emit(RECORD_DATA)
-                except Exception as e:
-                    print(e)
+            if not TOTAL_STATUS["REAL_TRAIN_STATUS"]:
+                if TOTAL_STATUS["RECORD_STATUS"]:
+                    try:
+                        TOTAL_DATA["RECORD_DATA"] = record_module.time_recording(TOTAL_STATUS["RECORD_STATUS"],param["GRAPH_TYPE"])
 
-    def stop(self):
-        self.exit()
-        self.wait(300)
+                        self.send_data.emit(TOTAL_DATA["RECORD_DATA"])
+
+                    except Exception as e:
+                        print("record e : ", e)
 
 class real_time_test(QThread):
     send_data = pyqtSignal(object)
     
-    def __init__(self,parent):
-        super().__init__(parent)    
-        self.parent = parent
+    def __init__(self):
+        super().__init__()    
 
     def run(self):
-        global STATUS
-        global TEST_STATUS
-        global RECORD_DATA
-        global TRAIN_STATUS
-        global THRESHOLD_LOGMEL
-        global PATIENCE
-        global count 
         count = 0
         while True:
             try:
-                if TEST_STATUS:
-                    if not TRAIN_STATUS:
-                        if RECORD_DATA is not None:
-                            start = time()
-                            result = test.test_run(RECORD_DATA,GRAPH,THRESHOLD_LOGMEL)
+                if (TOTAL_STATUS["TEST_STATUS"] == True) and (TOTAL_STATUS["TRAIN_STATUS"] == False):
+                    if TOTAL_DATA["RECORD_DATA"] is not None:
+                        start = time()
 
-                            RECORD_DATA = None
+                        result = test_module.test_run(TOTAL_DATA["RECORD_DATA"],param["GRAPH_TYPE"],param["THRESHOLD_LOGMEL"])
 
-                            if not result:
-                                count +=1
-                                if count == PATIENCE:
-                                    STATUS = False
-                                    TEST_STATUS = False
-                                    count = 0
-                            else:
+                        TOTAL_DATA["RECORD_DATA"] = None
+
+                        if not result:
+                            count +=1
+                            if count > param["PATIENCE"]:
+                                TOTAL_STATUS["NORMAL_STATUS"] = False
+                                TOTAL_STATUS["TEST_STATUS"] = False
                                 count = 0
-                            end = time()
-                            print("ELAPSED TIME : ", end - start)
-                            print("PATIENCE COUNT : ", count)
-                            self.send_data.emit(STATUS)
-            except Exception as e:
-                print(e)
+                                self.send_data.emit(TOTAL_STATUS["NORMAL_STATUS"])
+                        else:
+                            count = 0
 
-    def stop(self):
-        self.exit()
-        self.wait(300)
+                        end = time()
+                        print("PATIENCE COUNT : ", count)
+
+                if TOTAL_STATUS["TEST_STATUS"] == False:
+                    count = 0
+
+            except Exception as e:
+                print("test e ",e)
 
 class real_time_train(QThread): 
     send_data = pyqtSignal(object)
@@ -270,37 +196,31 @@ class real_time_train(QThread):
         self.parent = parent
 
     def run(self):
-        global RECORD_STATUS
-        global GRAPH
-        global TEST_STATUS
-        global TRAIN_STATUS
-        global RECORD_DATA
         csv_len = (param["TRAIN_TOTAL"] / param["PYAUDIO_SECONDS"])
         count = 0
         while True:
-            if TRAIN_STATUS:
+            if TOTAL_STATUS["TRAIN_STATUS"]:
                 try:
-                    TEST_STATUS = False
-                    if RECORD_DATA is not None:
-                        if count != csv_len:
-                            train.save_csv(RECORD_DATA, count, GRAPH)
+                    if TOTAL_DATA["RECORD_DATA"] is not None:
+                        print(count)
+                        if count < csv_len:
+                            record_module.save_csv(TOTAL_DATA["RECORD_DATA"], count, param["GRAPH_TYPE"])
                             count += 1
                             progress_value = int(count / csv_len * 100)
                             self.parent.progressBar.setValue(progress_value)
+                            TOTAL_DATA["RECORD_DATA"] = None
 
-                            RECORD_DATA = None
-                            
                         else:
-                            train.train_run(GRAPH)
-                            result = validation.validation_run(GRAPH)
-                            TRAIN_STATUS = False
+                            TOTAL_STATUS["REAL_TRAIN_STATUS"] = True
+                            train_module.train_run(param["GRAPH_TYPE"])
+                            TOTAL_STATUS["VALIDATION_STATUS"] = True
+                            result = validation_module.validation_run(param["GRAPH_TYPE"])
                             self.send_data.emit(result)
+                            TOTAL_STATUS["REAL_TRAIN_STATUS"] = False
+                            TOTAL_STATUS["VALIDATION_STATUS"] = False
+
                 except Exception as e:
-                    print(e)
-                
-    def stop(self):
-        self.exit()
-        self.wait(200)
+                    print("train e : ", e)
 
 class gui(QMainWindow, form_class):
     def __init__(self):
@@ -310,11 +230,11 @@ class gui(QMainWindow, form_class):
         self.UIStyle()
         self.UIinit()
 
-        self.real_record = real_time_record(self)
+        self.real_record = real_time_record()
         self.real_record.send_data.connect(self.graph)
         self.real_record.start()
 
-        self.real_test = real_time_test(self)
+        self.real_test = real_time_test()
         self.real_test.send_data.connect(self.error_check)
         self.real_test.start()
 
@@ -324,72 +244,59 @@ class gui(QMainWindow, form_class):
         self.real_label = real_time_label(self)
         self.real_label.start()
 
-        self.real_plc = real_time_plc(self)
-        self.real_plc.send_data.connect(self.restartEvent)
+        self.real_plc = real_time_plc()
         self.real_plc.start()
 
-    def graph(self, data):
-        global GRAPH
-        s = time()
-        if self.mat.itemAt(0) is not None:
-            self.mat.itemAt(0).widget().setParent(None)
         self.fig = plt.Figure()
         self.canvas = FigureCanvas(self.fig)
         self.mat.addWidget(self.canvas)
-        
         self.ax = self.fig.add_subplot(111)
-
-        if GRAPH == 'Log Mel':
-            graph = librosa.display.specshow(data, sr=param["AUDIO_SAMPLERATE"],x_axis='time',y_axis = 'mel', ax = self.ax, cmap="coolwarm",clim=(0,100))
-            self.ax.set_title("Log Mel Spectrogram (dB)")
-
-        elif GRAPH == 'STFT':
-            data = abs(data)
-            graph = librosa.display.specshow(data, sr=param["AUDIO_SAMPLERATE"],x_axis='time',y_axis = 'linear', ax = self.ax, cmap="coolwarm",clim=(0,100))
-            self.ax.set_title("STFT Spectrogram (dB)")
-
         self.ax.set_xlabel("Time frame")
         self.ax.set_ylabel("Frequency")
-        self.fig.colorbar(graph, format="%+2.0f dB")
-        e = time()
-        print("graph_time  : ",e-s)
-        
-    def sec_setting(self):
-        global GRAPH
-        global TEST_STATUS
-        global RECORD_STATUS
-        global RECORD_DATA
-        global param
-        TEST_STATUS = False
-        RECORD_STATUS = False
-        time_sec = self.setting_sec_combobox.currentText()
 
-        param["PYAUDIO_SECONDS"] = int(time_sec)
-        with open('param.yaml', 'w') as file:
-            yaml.dump(param, file, default_flow_style=False)
-        
-        RECORD_DATA = None
-        RECORD_STATUS = True
-        TEST_STATUS = True
+    def graph(self, data):
+        try:
+            s = time()
+
+            self.ax.cla()
+            self.ax.set_xlabel("Time frame")
+            self.ax.set_ylabel("Frequency")
+            if data is not None:
+                if param["GRAPH_TYPE"] == 'Log Mel':
+                    graph = librosa.display.specshow(data, sr=param["AUDIO_SAMPLERATE"],x_axis='time',y_axis = 'mel', ax = self.ax, cmap="coolwarm",clim=(0,100))
+                    self.canvas.draw_idle()
+                    self.canvas.flush_events()
+
+                    del graph
+                
+
+            e = time()
+            print("graph_time  : ",e-s)
+
+        except Exception as e:
+            print("graph e : ", e)
 
     def error_check(self, boolean):
-        global STATUS
-        global TEST_STATUS
-        if boolean:
-            STATUS = True
-        else:
-            STATUS = False
-            TEST_STATUS = False
-            
-
+        try:
+            if boolean:
+                TOTAL_STATUS["NORMAL_STATUS"] = True
+            else:
+                TOTAL_STATUS["NORMAL_STATUS"] = False
+                TOTAL_STATUS["TEST_STATUS"] = False
+        except Exception as e:
+            print("error_check e : ", e)
 #### VALUE ####
-    def train_total(self,value):
-        global TRAIN_TOTAL
-        TRAIN_TOTAL = int(value) * 60
-        self.setting_train_label.setText(str(value))
-        param["TRAIN_TOTAL"] = TRAIN_TOTAL
-        with open('param.yaml', 'w') as file:
-            yaml.dump(param, file, default_flow_style=False)
+    def train_total(self,option, value):
+        try:
+            if option == 'label':
+                self.setting_train_label.setText(str(value))
+            elif option == 'save':
+                TRAIN_TOTAL = value * 60
+                param["TRAIN_TOTAL"] = TRAIN_TOTAL
+                with open('param.yaml', 'w') as file:
+                    yaml.dump(param, file, default_flow_style=False)
+        except Exception as e:
+            print("train_total e : ",e )
 
 #### BUTTON ####
     def close(self):
@@ -399,85 +306,62 @@ class gui(QMainWindow, form_class):
         os.execl(sys.executable, sys.executable, *sys.argv)
 
     def threshold_setting(self,value):
-        global GRAPH
-        global param
-        global count
-        global THRESHOLD_LOGMEL
-        global TEST_STATUS
-        TEST_STATUS = False
-        count = 0
-        if GRAPH == "Log Mel":
-            param["THRESHOLD_LOGMEL"] = round(float(param["THRESHOLD_LOGMEL"] + value),1)
-            self.setting_threshold_tot_label.setText(str(param["THRESHOLD_LOGMEL"]))
+        try:
+            TOTAL_STATUS["TEST_STATUS"] = False
+            THRESHOLD = round(float(param["THRESHOLD_LOGMEL"] + value),1)
+            self.setting_threshold_tot_label.setText(str(THRESHOLD))
+            param["THRESHOLD_LOGMEL"] = THRESHOLD
 
-        elif GRAPH == "STFT":
-            param["STFT"] = round(float(param["STFT"] + value),1)
-            self.setting_threshold_tot_label.setText(str(param["THRESHOLD_STFT"]))
+            with open('param.yaml', 'w') as file:
+                yaml.dump(param, file, default_flow_style=False)
 
-        with open('param.yaml', 'w') as file:
-            yaml.dump(param, file, default_flow_style=False)
+            self.setting_threshold_slider.setValue(0)
+            print(param["THRESHOLD_LOGMEL"])
+            TOTAL_STATUS["TEST_STATUS"] = True
 
-        THRESHOLD_LOGMEL = round(float(param["THRESHOLD_LOGMEL"]),1)
-        self.setting_threshold_slider.setValue(0)
-        TEST_STATUS = True
+        except Exception as e:
+            print("threshold_setting e :", e)
 
     def patience_setting(self,value):
-        global TEST_STATUS
-        global param
-        global count
-        global PATIENCE
-        TEST_STATUS = False
+        try:
+            TOTAL_STATUS["TEST_STATUS"] = False
 
-        count = 0
-        param["PATIENCE"] = int(value)
-        with open('param.yaml', 'w') as file:
-            yaml.dump(param, file, default_flow_style=False)
-        PATIENCE = param["PATIENCE"]
-        self.setting_patience_label.setText(str(PATIENCE))
-        TEST_STATUS = True
+            param["PATIENCE"] = value
+
+            with open('param.yaml', 'w') as file:
+                yaml.dump(param, file, default_flow_style=False)
+
+            PATIENCE = param["PATIENCE"]
+            self.setting_patience_label.setText(str(PATIENCE))
+
+            TOTAL_STATUS["TEST_STATUS"] = True
+
+        except Exception as e:
+            print("patience_setting e : ", e)
 
     def deep_check(self):
-        test.model_load()
+        TOTAL_STATUS["TEST_STATUS"] = False
+        test_module.model_load()
+        TOTAL_STATUS["TEST_STATUS"] = True
+        self.tabWidget.setCurrentIndex(0)
 
     def module_check(self):
-        global PLC_STATUS
-        global PLC_BOOLEAN
-        PLC_STATUS = True
-        PLC_BOOLEAN = True
+        serial_module.port_init()
         self.tabWidget.setCurrentIndex(0)
-        # self.real_plc = real_time_plc(self)
-        # self.real_plc.start()
 
     def train_check(self, boolean):
-        global TRAIN_STATUS
-        global TEST_STATUS
         self.tabWidget.setCurrentIndex(0)
-        TRAIN_STATUS = boolean
-        if TRAIN_STATUS:
-            TEST_STATUS = False
+        TOTAL_STATUS["TRAIN_STATUS"] = boolean
+        if TOTAL_STATUS["TRAIN_STATUS"]:
+            TOTAL_STATUS["TEST_STATUS"] = False
             self.real_train.start()
 
         else:
-            TRAIN_STATUS = False
-            TEST_STATUS = True
+            TOTAL_STATUS["TRAIN_STATUS"] = False
+            TOTAL_STATUS["TEST_STATUS"] = True
             for file in os.scandir(param["DIR_NAME_TRAIN_LOGMEL"]):
                 os.remove(file.path)
 
-    def restartEvent(self, boolean):
-        global RESTART_STATUS
-        global STATUS
-        global TEST_STATUS
-        if boolean:
-            reply = QMessageBox.question(self, 'Message',
-                        "다시 시작", QMessageBox.StandardButton.Yes |
-                        QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
-
-            if reply == QMessageBox.StandardButton.Yes:
-                RESTART_STATUS = False
-                STATUS = True
-                TEST_STATUS = True
-            else:
-                sys.exit()
 #### UINIT ####
     def UIinit(self):
         #### CLICKED ####
@@ -487,16 +371,13 @@ class gui(QMainWindow, form_class):
         self.check_module_button.clicked.connect(self.module_check)
         self.check_train_button.clicked.connect(lambda:self.train_check(True))
 
-        #### COMBOBOX ####
-        self.setting_sec_combobox.currentIndexChanged.connect(self.sec_setting)
-
         #### SLIDER ####
         self.setting_threshold_slider.valueChanged[int].connect(self.threshold_setting)
-        self.setting_train_slider.valueChanged[int].connect(self.train_total)
+        # self.setting_train_slider.valueChanged[int].connect(lambda : self.train_total('label', value))
+        self.setting_train_slider.sliderReleased.connect(lambda: self.train_total())
         self.setting_patience_slider.valueChanged[int].connect(self.patience_setting)
 
     def UIStyle(self):
-        global param
         #### ICON #####
         self.tabWidget.setTabIcon(0,QIcon("./resource/pic_dashboard.png"))
         self.tabWidget.setTabIcon(1,QIcon("./resource/pic_check.png"))
@@ -504,7 +385,7 @@ class gui(QMainWindow, form_class):
         self.close_button.setIcon(QIcon("./resource/pic_close.png"))
 
         #### LABEL ####
-        self.time_label.setText(NOW.toString(Qt.DateFormat.ISODate))
+        self.time_label.setText(TOTAL_DATA["NOW"].toString(Qt.DateFormat.ISODate))
         self.statusbar.setStyleSheet("QStatusBar{padding-left:8px;color:white}")
         self.setting_patience_label.setText(str(param["PATIENCE"]))
         self.setting_train_label.setText(str(int(param["TRAIN_TOTAL"]/60)))
@@ -512,6 +393,7 @@ class gui(QMainWindow, form_class):
         #### SLIDER ####
         self.setting_patience_slider.setValue(int(param["PATIENCE"]))
         self.setting_train_slider.setValue(int(param["TRAIN_TOTAL"]/60))
+
 if __name__ == "__main__" :
     app = QApplication(sys.argv)
     myWindow = gui()

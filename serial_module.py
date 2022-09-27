@@ -17,26 +17,24 @@ def port_init():
     global output
     
     list_port = sp.comports()
-    for i in list_port:
-        port_temp = str(i).split(" ")[0]
-        if "usbserial" or "COM" in port_temp:
-            ser = serial.Serial(port = port_temp, baudrate = 9600, timeout = 1)
-            try:
-                ser.write(connection_code)
-                result = ser.readline().decode('ascii')
-                if result[0] == '\x06':
-                    output[0] = True
-                    output[1] = plf
-                    output[2] = port_temp
-                    return output
-                    break
-            except:
-                continue
+    try:
+        for i in list_port:
+            port_temp = str(i).split(" ")[0]
+            if "usbserial" or "COM" in port_temp:
+                ser = serial.Serial(port = port_temp, baudrate = 9600, timeout = 1)
+                try:
+                    ser.write(connection_code)
+                    result = ser.readline().decode('ascii')
+                    if result[0] == '\x06':
+                        output = [True, plf, port_temp]
+                        return output
+                        break
+                except:
+                    continue
+    except:
+        output = [False, plf, None]
+        return output
 
-    #### For memory leak
-    del port_temp
-    del result 
-    del list_port
 
 def port_error_message():
     global output
@@ -52,6 +50,3 @@ def port_error_message():
             return False
     except:
         return False
-
-    #### For memory leak
-    del result

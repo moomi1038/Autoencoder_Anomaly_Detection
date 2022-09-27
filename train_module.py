@@ -41,11 +41,11 @@ def file_list_generator(graph,
 
 def file_to_vector_array(FILES, graph):
     global param
+
     if graph == "Log Mel":
         dims = param["LIBROSA_N_MELS"] * param["FRAMES"]
         for i in range(len(FILES)):
             temp = pd.read_csv(FILES[i],header=None).to_numpy()
-            
             vector_array_size = len(temp[0, :]) - param["FRAMES"] + 1
             if vector_array_size < 1:
                 return np.empty((0, dims))
@@ -53,7 +53,7 @@ def file_to_vector_array(FILES, graph):
             vector_array = np.zeros((vector_array_size, dims))
             for t in range(param["FRAMES"]):
                 vector_array[:, param["LIBROSA_N_MELS"] * t: param["LIBROSA_N_MELS"] * (t + 1)] = temp[:, t: t + vector_array_size].T
-
+            
             if i == 0:
                 dataset = np.zeros((vector_array.shape[0] * len(FILES), dims), float)
             dataset[vector_array.shape[0] * i: vector_array.shape[0] * (i + 1), :] = vector_array
@@ -102,19 +102,3 @@ def train_run(graph):
     FILES = file_list_generator(graph)
     train_data = file_to_vector_array(FILES, graph)
     train(train_data, graph)
-
-
-def save_csv(record_data, i, graph):
-    global param
-    if graph == "Log Mel":
-        dir_path_file = os.path.abspath('./{dir_name}'.format(dir_name = param["DIR_NAME_TRAIN_LOGMEL"]))
-    elif graph == "STFT":
-        dir_path_file = os.path.abspath('./{dir_name}'.format(dir_name = param["DIR_NAME_TRAIN_STFT"]))
-
-    file_name = dir_path_file + '/id01_' + '{:0>5}'.format(i) + '_.csv'
-    
-    f = open(file_name, 'w')
-    wr = csv.writer(f)
-    wr.writerows(record_data)
-    f.close()
-

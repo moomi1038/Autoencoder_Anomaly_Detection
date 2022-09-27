@@ -48,7 +48,7 @@ def del_file():
         os.remove(file.path)
 
 def validation_run(GRAPH):
-
+    global param
     os.makedirs(param["DIR_NAME_RESULT"], exist_ok=True)
 
     csv_lines = []
@@ -58,13 +58,7 @@ def validation_run(GRAPH):
         normal_dir = param["DIR_NAME_TRAIN_LOGMEL"]
         abnormal_dir = param["DIR_NAME_TEST_LOGMEL"]
 
-    elif GRAPH == "STFT":
-        model_file = "{model}/model_stft.hdf5".format(model=param["DIR_NAME_MODEL"])
-        normal_dir = param["DIR_NAME_TRAIN_STFT"]
-        abnormal_dir = param["DIR_NAME_TEST_STFT"]
-
     model = keras_model.load_model(model_file)
-    model.summary()
 
     csv_lines.append(["AUC"])
     performance = []
@@ -78,7 +72,7 @@ def validation_run(GRAPH):
     y_pred = [0. for k in test_files]
     for file_idx, file_path in tqdm(enumerate(test_files), total=len(test_files)):
         try:
-            data = train.file_to_vector_array([file_path], GRAPH)
+            data = train_module.file_to_vector_array([file_path], GRAPH)
             errors = np.mean(np.square(data - model.predict(data)), axis=1)
             reconstruction_error = np.mean(errors)
 
