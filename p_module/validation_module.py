@@ -1,14 +1,12 @@
 import os
 import glob
 import csv
-# import matplotlib.pyplot as plt
-# import pandas as pd
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import precision_recall_curve
 import numpy as np
-from tqdm import tqdm
-import keras_model
-import train_module
+from tqdm import tqdm 
+import module.keras_model as keras_model
+import module.train_module as train_module
 import yaml
 
 with open("param.yaml") as f:

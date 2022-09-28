@@ -13,11 +13,11 @@ import psutil
 import platform
 from time import sleep, time
 
-import record_module 
-import train_module
-import test_module
-import validation_module
-import serial_module
+import module.record_module as record_module
+import module.train_module as train_module
+import module.test_module as test_module
+import module.validation_module as validation_module
+import module.serial_module as serial_module
 
 with open("param.yaml") as f: 
     param = yaml.load(f, Loader=yaml.FullLoader)
