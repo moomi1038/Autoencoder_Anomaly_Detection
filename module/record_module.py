@@ -1,51 +1,38 @@
-import os
-import csv
 import pyaudio
 import numpy as np
 import librosa
-import librosa.display
-import sys
-import yaml
-from time import sleep, time
+from time import time
+import os
+import pandas as pd
 
-with open("param.yaml") as f:
-    param = yaml.load(f, Loader=yaml.FullLoader)
-
-
-def time_recording(boolean, graph):
-    global param
-    global stream
+def time_recording(rate, chunk, n_fft):
     s = time()
-    if boolean:
-        y = np.array([])
-        p = pyaudio.PyAudio()
-        stream = p.open(format=pyaudio.paInt16,
-                        channels=param["PYAUDIO_CHANNELS"],
-                        rate=param["AUDIO_SAMPLERATE"],
-                        input=True,
-                        frames_per_buffer=param["PYAUDIO_CHUNK"])
-                        
-        for j in range(0, int(param["AUDIO_SAMPLERATE"] / param["PYAUDIO_CHUNK"] * param["PYAUDIO_SECONDS"])):
-            data = stream.read(param["PYAUDIO_CHUNK"])
-            numpydata = np.frombuffer(data, dtype=np.int16)
-            y = np.append(y,numpydata)
-
-        if graph == 'Log Mel':
-            mel_spectrogram = librosa.feature.melspectrogram(y=y,sr=param["AUDIO_SAMPLERATE"],n_fft=param["LIBROSA_N_FFT"], hop_length=param["LIBROSA_HOP_LENGTH"], n_mels= param["LIBROSA_N_MELS"], power=param["LIBROSA_POWER"])
-            rec_data = 20.0 / param["LIBROSA_POWER"] * np.log10(mel_spectrogram + sys.float_info.epsilon)
-
-        e = time()
-        print("record_time  : ",e-s)
-        
-        return rec_data
-
-def save_csv(record_data, i, graph):
-    if graph == "Log Mel":
-        dir_path_file = os.path.abspath('./{dir_name}'.format(dir_name = param["DIR_NAME_TRAIN_LOGMEL"]))
-
-    file_name = dir_path_file + '/id01_' + '{:0>5}'.format(i) + '_.csv'
+    y = np.array([])
+    numpydata = np.array([])
+    rec_data = np.array([])
+    p = pyaudio.PyAudio()
     
-    f = open(file_name, 'w')
-    wr = csv.writer(f)
-    wr.writerows(record_data)
-    f.close()
+    stream = p.open(format=pyaudio.paInt16,
+                    channels=1,
+                    rate=rate,
+                    input=True,
+                    frames_per_buffer=chunk)
+                    
+    for j in range(0, int(rate / chunk * 3)):
+        numpydata = np.frombuffer(stream.read(chunk), dtype=np.int16)
+        y = np.append(y,numpydata)
+
+    rec_data = librosa.amplitude_to_db(np.abs(librosa.stft(y=np.abs(y),n_fft=n_fft)))
+    t = time()
+    print("record time :", t - s)
+    return rec_data
+
+def save_data(record_data, i, path):
+    s = time()
+    head = [str(i) for i in range(record_data.shape[1])]
+    df = pd.DataFrame(record_data, columns= head)
+    file_name = ''.join(["id01_",'{:0>5}'.format(i),"_.parquet"])
+    file_path_name = os.path.join(path,file_name)
+    df.to_parquet(file_path_name)
+    t = time()
+    print("save time :", t - s)
