@@ -12,9 +12,6 @@ def test_run(data, model, threshold):
     print("test_time  : ",e-s)
 
     if reconstruction_error > threshold:
-        return [reconstruction_error, False]
+        return False
     else:
-        return [reconstruction_error, True]
-     
-
-# model = keras_model.load_model("./model/model_stft.hdf5")   
+        return True     

@@ -40,6 +40,10 @@ TOTAL_DATA = {
     "PLC_PORT" : None, # PLC PORT
     "PLF" : None,
     "NOW" : QDate.currentDate(),
+    "PATIENCE" : 0,
+    "TRAIN_TOTAL" : 0
+}
+TOTAL_STYLE = {
     "STYLE_NORMAL_WHITE" : "border-width: 2px; border-radius: 10px; background-color: rgb(5, 172, 230); color: rgb(255, 255, 255);",
     "STYLE_ABNORMAL_WHITE" : "border-width: 2px; border-radius: 10px; background-color: rgb(230, 5, 5); color: rgb(255, 255, 255);",
     "STYLE_ING_WHITE" : "border-width: 2px; border-radius: 10px; background-color: rgb(5, 172, 230); color: rgb(255, 255, 255);",
@@ -64,42 +68,45 @@ class real_time_label(QThread):
                 self.parent.ram_usage.setText(f'{str(psutil.virtual_memory().used / 1024**3):.4}' + " GB")
                 self.parent.time_label.setText(QDate.currentDate().toString(Qt.DateFormat.ISODate))
                 self.parent.setting_threshold_tot_label.setText(str(param["THRESHOLD_STFT"]))
+                self.parent.setting_patience_label.setText(str(param["PATIENCE"]))
+                self.parent.patience_slider.setMaximum(param["PATIENCE"])
+                self.parent.patience_slider.setValue(TOTAL_DATA["PATIENCE"])
 
                 if TOTAL_STATUS["NORMAL_STATUS"] == True:
                     self.parent.abnormal_check_label.setText("이상감지 정상")
-                    self.parent.abnormal_check_label.setStyleSheet(TOTAL_DATA["STYLE_NORMAL_WHITE"])
+                    self.parent.abnormal_check_label.setStyleSheet(TOTAL_STYLE["STYLE_NORMAL_WHITE"])
 
                 elif TOTAL_STATUS["NORMAL_STATUS"] == False:
                     self.parent.abnormal_check_label.setText("이상감지 비정상!")
-                    self.parent.abnormal_check_label.setStyleSheet(TOTAL_DATA["STYLE_ABNORMAL_WHITE"])
+                    self.parent.abnormal_check_label.setStyleSheet(TOTAL_STYLE["STYLE_ABNORMAL_WHITE"])
 
                 if TOTAL_STATUS["TRAIN_STATUS"] == False:
                     self.parent.deep_check_label.setText("딥러닝 정상")
-                    self.parent.deep_check_label.setStyleSheet(TOTAL_DATA["STYLE_NORMAL_WHITE"])
+                    self.parent.deep_check_label.setStyleSheet(TOTAL_STYLE["STYLE_NORMAL_WHITE"])
 
                 elif TOTAL_STATUS["TRAIN_STATUS"] == True:
                     self.parent.deep_check_label.setText("녹음중!")
-                    self.parent.deep_check_label.setStyleSheet(TOTAL_DATA["STYLE_ING_WHITE"])
+                    self.parent.deep_check_label.setStyleSheet(TOTAL_STYLE["STYLE_ING_WHITE"])
 
                 if TOTAL_STATUS["TEST_STATUS"] == False and TOTAL_STATUS["TRAIN_STATUS"] == True:
                     self.parent.abnormal_check_label.setText("이상감지 시스템 \n 학습중!")
-                    self.parent.abnormal_check_label.setStyleSheet(TOTAL_DATA["STYLE_ING_WHITE"])
+                    self.parent.abnormal_check_label.setStyleSheet(TOTAL_STYLE["STYLE_ING_WHITE"])
 
                 if TOTAL_STATUS["PLC_STATUS"] == True:
                     self.parent.module_check_label.setText("모듈연결 정상")
-                    self.parent.module_check_label.setStyleSheet(TOTAL_DATA["STYLE_NORMAL_WHITE"])
+                    self.parent.module_check_label.setStyleSheet(TOTAL_STYLE["STYLE_NORMAL_WHITE"])
                     
                 elif TOTAL_STATUS["PLC_STATUS"] == False:
                     self.parent.module_check_label.setText("모듈연결 비정상!")
-                    self.parent.module_check_label.setStyleSheet(TOTAL_DATA["STYLE_ABNORMAL_WHITE"])
+                    self.parent.module_check_label.setStyleSheet(TOTAL_STYLE["STYLE_ABNORMAL_WHITE"])
 
                 if (TOTAL_STATUS["TRAIN_STATUS"] == True) and (TOTAL_STATUS["REAL_TRAIN_STATUS"] == True):
                     self.parent.deep_check_label.setText("학습을 위해 \n 녹음 정지!")
-                    self.parent.deep_check_label.setStyleSheet(TOTAL_DATA["STYLE_ABNORMAL_WHITE"])
+                    self.parent.deep_check_label.setStyleSheet(TOTAL_STYLE["STYLE_ABNORMAL_WHITE"])
 
                 if (TOTAL_STATUS["REAL_TRAIN_STATUS"] == True) and (TOTAL_STATUS["VALIDATION_STATUS"] == True):
                     self.parent.abnormal_check_label.setText("이상감지 학습 \n 검증중!")
-                    self.parent.abnormal_check_label.setStyleSheet(TOTAL_DATA["STYLE_ABNORMAL_WHITE"])
+                    self.parent.abnormal_check_label.setStyleSheet(TOTAL_STYLE["STYLE_ABNORMAL_WHITE"])
             except Exception as e:
                 print("label e :", e)
 
@@ -121,10 +128,17 @@ class real_time_record(QThread):
                 try:
                     data = record_module.time_recording(param["AUDIO_SAMPLERATE"],param["PYAUDIO_CHUNK"],param["LIBROSA_N_FFT"])
                     
-                        
                     self.send_data.emit(data)
+
                     if TOTAL_STATUS["TEST_STATUS"]:
-                        test_module.test_run(data, self.model,param["THRESHOLD_STFT"])
+                        result = test_module.test_run(data, self.model,param["THRESHOLD_STFT"])
+                        if not result:
+                            TOTAL_DATA["PATIENCE"] +=1
+                            if TOTAL_DATA["PATIENCE"] >= param["PATIENCE"]:
+                                print("ERROR OCCUR")
+                        else:
+                            TOTAL_DATA["PATIENCE"] = 0
+
                 except Exception as e:
                     print("record e : ", e)        
 
@@ -145,7 +159,7 @@ class gui(QMainWindow, form_class):
 
         self.real_label = real_time_label(self)
         self.real_label.start()
-        
+
         self.real_record = real_time_record()
         self.real_record.send_data.connect(self.graph)
         self.real_record.start()
@@ -153,7 +167,6 @@ class gui(QMainWindow, form_class):
     def graph(self, data):
         try:
             s = time()
-
             self.ax.cla()
             self.ax.set_xlabel("Time frame")
             self.ax.set_ylabel("Frequency")
@@ -177,18 +190,17 @@ class gui(QMainWindow, form_class):
                 TOTAL_STATUS["TEST_STATUS"] = False
         except Exception as e:
             print("error_check e : ", e)
+
 #### VALUE ####
-    def train_total(self,option, value):
-        try:
-            if option == 'label':
-                self.setting_train_label.setText(str(value))
-            elif option == 'save':
-                TRAIN_TOTAL = value * 60
-                param["TRAIN_TOTAL"] = TRAIN_TOTAL
-                with open('param.yaml', 'w') as file:
-                    yaml.dump(param, file, default_flow_style=False)
-        except Exception as e:
-            print("train_total e : ",e )
+    # def train_setting(self,value):
+    #     self.setting_train_label.setText(str(value))
+
+    # def threshold_setting(self,value):
+    #     print(value)
+    #     self.setting_threshold_tot_label.setText(str(value))
+
+    # def patience_setting(self,value):
+    #     self.setting_patience_label.setText(str(value))
 
 #### BUTTON ####
     def close(self):
@@ -197,14 +209,28 @@ class gui(QMainWindow, form_class):
     def restart(self):
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-    def threshold_setting(self,value):
+#### SLIDER ####
+    def train_total(self):
+        try:
+            TOTAL_STATUS["TRAIN_STATUS"] = False
+            value = self.setting_train_slider.value()
+            self.setting_train_label.setText(str(value))
+            param["TRAIN_TOTAL"] = value * 60
+            TOTAL_DATA["TRAIN_TOTAL"] = value * 60 // 3
+            with open(param_path, 'w') as file:
+                yaml.dump(param, file, default_flow_style=False)
+
+        except Exception as e:
+            print("train_total e : ",e )
+            
+    def threshold_total(self,value):
         try:
             TOTAL_STATUS["TEST_STATUS"] = False
-            THRESHOLD = round(float(param["THRESHOLD_LOGMEL"] + value),1)
+            THRESHOLD = round(float(param["THRESHOLD_LOGMEL"] + value))
             self.setting_threshold_tot_label.setText(str(THRESHOLD))
             param["THRESHOLD_LOGMEL"] = THRESHOLD
 
-            with open('param.yaml', 'w') as file:
+            with open(param_path, 'w') as file:
                 yaml.dump(param, file, default_flow_style=False)
 
             self.setting_threshold_slider.setValue(0)
@@ -214,31 +240,29 @@ class gui(QMainWindow, form_class):
         except Exception as e:
             print("threshold_setting e :", e)
 
-    def patience_setting(self,value):
+    def patience_total(self):
         try:
             TOTAL_STATUS["TEST_STATUS"] = False
-
+            value = self.setting_train_slider.value()
             param["PATIENCE"] = value
 
-            with open('param.yaml', 'w') as file:
+            with open(param_path, 'w') as file:
                 yaml.dump(param, file, default_flow_style=False)
 
-            PATIENCE = param["PATIENCE"]
-            self.setting_patience_label.setText(str(PATIENCE))
+            self.setting_patience_label.setText(str(value))
 
-            TOTAL_STATUS["TEST_STATUS"] = True
+            if not TOTAL_STATUS["TRAIN_STATUS"]:
+                TOTAL_STATUS["TEST_STATUS"] = True
 
         except Exception as e:
             print("patience_setting e : ", e)
 
     def deep_check(self):
-        TOTAL_STATUS["TEST_STATUS"] = False
-        test_module.model_load()
-        TOTAL_STATUS["TEST_STATUS"] = True
+        print("DFDF")
         self.tabWidget.setCurrentIndex(0)
 
     def module_check(self):
-        serial_module.port_init()
+        print("DFDF")
         self.tabWidget.setCurrentIndex(0)
 
     def train_check(self, boolean):
@@ -265,10 +289,13 @@ class gui(QMainWindow, form_class):
         self.check_train_button.clicked.connect(lambda:self.train_check(True))
 
         #### SLIDER ####
-        self.setting_threshold_slider.valueChanged[int].connect(self.threshold_setting)
-        # self.setting_train_slider.valueChanged[int].connect(lambda : self.train_total('label', value))
-        self.setting_train_slider.sliderReleased.connect(lambda: self.train_total())
-        self.setting_patience_slider.valueChanged[int].connect(self.patience_setting)
+        self.setting_train_slider.sliderReleased.connect(lambda: self.train_total)
+        self.setting_threshold_slider.sliderReleased.connect(lambda: self.threshold_total)
+        self.setting_patience_slider.sliderReleased.connect(lambda: self.patience_total)
+
+        # self.setting_threshold_slider.valueChanged[int].connect(self.threshold_setting)
+        # self.setting_train_slider.valueChanged[int].connect(self.train_setting)
+        # self.setting_patience_slider.valueChanged[int].connect(self.patience_setting)
 
     def UIStyle(self):
         #### ICON #####
