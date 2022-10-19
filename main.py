@@ -276,27 +276,6 @@ class gui(QMainWindow, form_class):
         except Exception as e:
             print("graph e : ", e)
 
-    def error_check(self, boolean):
-        try:
-            if boolean:
-                TOTAL_STATUS["NORMAL_STATUS"] = True
-            else:
-                TOTAL_STATUS["NORMAL_STATUS"] = False
-                TOTAL_STATUS["TEST_STATUS"] = False
-        except Exception as e:
-            print("error_check e : ", e)
-#### VALUE ####
-    def train_total(self,option, value):
-        try:
-            if option == 'label':
-                self.setting_train_label.setText(str(value))
-            elif option == 'save':
-                TRAIN_TOTAL = value * 60
-                param["TRAIN_TOTAL"] = TRAIN_TOTAL
-                with open('param.yaml', 'w') as file:
-                    yaml.dump(param, file, default_flow_style=False)
-        except Exception as e:
-            print("train_total e : ",e )
 
 #### BUTTON ####
     def close(self):
@@ -305,62 +284,6 @@ class gui(QMainWindow, form_class):
     def restart(self):
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-    def threshold_setting(self,value):
-        try:
-            TOTAL_STATUS["TEST_STATUS"] = False
-            THRESHOLD = round(float(param["THRESHOLD_LOGMEL"] + value),1)
-            self.setting_threshold_tot_label.setText(str(THRESHOLD))
-            param["THRESHOLD_LOGMEL"] = THRESHOLD
-
-            with open('param.yaml', 'w') as file:
-                yaml.dump(param, file, default_flow_style=False)
-
-            self.setting_threshold_slider.setValue(0)
-            print(param["THRESHOLD_LOGMEL"])
-            TOTAL_STATUS["TEST_STATUS"] = True
-
-        except Exception as e:
-            print("threshold_setting e :", e)
-
-    def patience_setting(self,value):
-        try:
-            TOTAL_STATUS["TEST_STATUS"] = False
-
-            param["PATIENCE"] = value
-
-            with open('param.yaml', 'w') as file:
-                yaml.dump(param, file, default_flow_style=False)
-
-            PATIENCE = param["PATIENCE"]
-            self.setting_patience_label.setText(str(PATIENCE))
-
-            TOTAL_STATUS["TEST_STATUS"] = True
-
-        except Exception as e:
-            print("patience_setting e : ", e)
-
-    def deep_check(self):
-        TOTAL_STATUS["TEST_STATUS"] = False
-        test_module.model_load()
-        TOTAL_STATUS["TEST_STATUS"] = True
-        self.tabWidget.setCurrentIndex(0)
-
-    def module_check(self):
-        serial_module.port_init()
-        self.tabWidget.setCurrentIndex(0)
-
-    def train_check(self, boolean):
-        self.tabWidget.setCurrentIndex(0)
-        TOTAL_STATUS["TRAIN_STATUS"] = boolean
-        if TOTAL_STATUS["TRAIN_STATUS"]:
-            TOTAL_STATUS["TEST_STATUS"] = False
-            self.real_train.start()
-
-        else:
-            TOTAL_STATUS["TRAIN_STATUS"] = False
-            TOTAL_STATUS["TEST_STATUS"] = True
-            for file in os.scandir(param["DIR_NAME_TRAIN_LOGMEL"]):
-                os.remove(file.path)
 
 #### UINIT ####
     def UIinit(self):
