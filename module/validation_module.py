@@ -1,16 +1,16 @@
 import os
 import glob
-import csv
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import precision_recall_curve
 import numpy as np
-from tqdm import tqdm 
+from tqdm.auto import tqdm 
 import module.keras_model as keras_model
+import module.utils as utils
 import yaml
 import pandas as pd
-import matplotlib.pyplot as plt
 
-with open("param.yaml") as f:
+path = os.getcwd()
+param_path = os.path.join(path,"param.yaml")
+
+with open(param_path) as f:
     param = yaml.load(f, Loader=yaml.FullLoader)
 
 def test_file_list_generator(normal_dir,abnormal_dir,
@@ -31,18 +31,13 @@ def test_file_list_generator(normal_dir,abnormal_dir,
     
     return files, labels
 
-def validation_run(GRAPH):
-    os.makedirs(param["DIR_NAME_RESULT"], exist_ok=True)
+def validation_run():
 
-    csv_lines = []
-
-    model_file = "./model/model_stft.hdf5"
-    normal_dir = param["DIR_NAME_TRAIN_STFT"]
-    abnormal_dir = param["DIR_NAME_TEST_STFT"]
+    model_file = os.path.join(path,param["DIR_NAME_MODEL"])
+    normal_dir = os.path.join(path,param["DIR_NAME_TRAIN_STFT"])
+    abnormal_dir = os.path.join(path,param["DIR_NAME_TEST_STFT"])
 
     model = keras_model.load_model(model_file)
-
-    performance = []
 
     test_files, y_true = test_file_list_generator(normal_dir,abnormal_dir)
 
@@ -55,37 +50,7 @@ def validation_run(GRAPH):
             reconstruction_error = np.mean(errors)
             y_pred[file_idx] = reconstruction_error
 
-        except:
-            print("file broken")
+        except Exception as e:
+            print(e)
 
-        auc = roc_auc_score(y_true, y_pred)
-
-        csv_lines.append([auc])
-        performance.append([auc])
-
-    # threshold_fixed = []
-    # precision_rt, recall_rt, threshold_rt = precision_recall_curve(y_true,y_pred)
-    # best_cnt_dic = abs(precision_rt-recall_rt)
-    # threshold_fixed.append([threshold_rt[np.argmin(best_cnt_dic)]])
-    # threshold_file_path = os.path.abspath("{dir_name}/threshold.csv".format(dir_name=param["DIR_NAME_RESULT"]))
-    
-    # save_csv(threshold_file_path, threshold_fixed)
-
-    # param["THRESHOLD_LOGMEL"] = round(float(threshold_rt[np.argmin(best_cnt_dic)]),1)
-
-    # with open('param.yaml', 'w') as file:
-    #     yaml.dump(param, file, default_flow_style=False)
-
-        
-    # print("\n============ END OF TEST FOR A MACHINE ID ============")
-
-    # averaged_performance = np.mean(np.array(performance, dtype=float), axis=0)
-    # csv_lines.append(["Average"] + list(averaged_performance))
-    
-    # csv_lines.append([])
-    # result_path = "{result}/result.csv".format(result=param["DIR_NAME_RESULT"])
-    # save_csv(save_file_path=result_path, save_data=csv_lines)
-
-    # del_file()
-
-    # return False
+    utils.plotting(y_true,y_pred, "valid")

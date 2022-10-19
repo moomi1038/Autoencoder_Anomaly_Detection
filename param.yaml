@@ -1,6 +1,6 @@
 AUDIO_SAMPLERATE: 16000
 BATCH_SIZE: 128
-DIR_NAME_MODEL: model
+DIR_NAME_MODEL: model/model_stft.hdf5
 DIR_NAME_RESULT: result
 DIR_NAME_TEST_STFT: tr/test_stft_parquet
 DIR_NAME_TRAIN_STFT: tr/train_stft_parquet

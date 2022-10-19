@@ -10,7 +10,6 @@ import librosa.display
 import sys
 import yaml
 import psutil
-import platform
 from time import sleep, time
 
 import module.record_module as record_module
@@ -19,7 +18,10 @@ import module.test_module as test_module
 import module.validation_module as validation_module
 import module.serial_module as serial_module
 
-with open("param.yaml") as f: 
+path = os.getcwd()
+param_path = os.path.join(path,"param.yaml")
+
+with open(param_path) as f:
     param = yaml.load(f, Loader=yaml.FullLoader)
 
 TOTAL_STATUS = {

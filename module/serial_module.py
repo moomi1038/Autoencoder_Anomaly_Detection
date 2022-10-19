@@ -5,9 +5,8 @@ import platform
 
 plf = platform.system()
 
-connection_code = str('\x0501RSS0106%MW' + '003' +'\x04').encode()
-error_code = str('\x0501WSS0106%MW' + '003' + '0001' + '\x04').encode()
-
+connection_code = '\x0501RSS0106%MW003\x04'.encode()
+error_code = '\x0501WSS0106%MW0030001\x04'.encode()
 output = [False, plf, " "]
 
 ## output : [connection_success , platform, port_name]
