@@ -256,7 +256,7 @@ QTabBar::tab:selected {
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <layout class="QHBoxLayout" name="horizontalLayout" stretch="9,1">
+         <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,1">
           <property name="sizeConstraint">
            <enum>QLayout::SetMaximumSize</enum>
           </property>
