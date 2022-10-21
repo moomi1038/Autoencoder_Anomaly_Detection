@@ -11,6 +11,7 @@ import sys
 import yaml
 import psutil
 import platform
+import tensorflow as tf
 from time import sleep, time
 
 import module.record_module as record_module
@@ -119,6 +120,10 @@ class real_time_record(QThread):
             temp = os.path.join(path, param["DIR_NAME_MODEL"])
             self.model = keras_module.load_model(temp)
 
+            temp = os.path.join(path, './model/dtln_saved_model')
+            denoise_model = tf.saved_model.load(temp)
+            self.infer = denoise_model.signatures["serving_default"]
+            
         except Exception as e:
             print("Model load e : ", e)
 
@@ -126,7 +131,7 @@ class real_time_record(QThread):
         while True:
             if TOTAL_STATUS["RECORD_STATUS"]:
                 try:
-                    data = record_module.time_recording(param["AUDIO_SAMPLERATE"],param["PYAUDIO_CHUNK"],param["LIBROSA_N_FFT"])
+                    data = record_module.time_recording(param["AUDIO_SAMPLERATE"],param["PYAUDIO_CHUNK"],param["LIBROSA_N_FFT"], self.infer)
                     
                     self.send_data.emit(data)
 
