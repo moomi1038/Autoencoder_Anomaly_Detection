@@ -73,8 +73,6 @@ def denoise(audio, infer):
     return out_file
 
 
-
-
 def save_data(record_data, i, path):
     s = time()
     head = [str(i) for i in range(record_data.shape[1])]
