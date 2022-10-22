@@ -2,6 +2,8 @@ import pyaudio
 import tensorflow as tf
 import numpy as np
 import librosa
+from numba import jit
+
 from time import time
 import os
 import pandas as pd
@@ -9,7 +11,7 @@ import pandas as pd
 def time_recording(rate, chunk, n_fft, infer):
     s = time()
     frames = []
-    y = np.array([])
+    audio = []
     data = np.array([])
     rec_data = np.array([])
     p = pyaudio.PyAudio()
@@ -24,15 +26,22 @@ def time_recording(rate, chunk, n_fft, infer):
         data = stream.read(chunk)
         frames.append(np.frombuffer(data, dtype=np.float32))
 
-    # y = np.array(frames)
-    y = np.hstack(frames)
+    audio = np.hstack(frames)
 
+    out_file = denoise(audio, infer)
+
+    rec_data = librosa.amplitude_to_db(np.abs(librosa.stft(y=np.abs(out_file),n_fft=n_fft)))
+
+    t = time()
+
+    print("record time :", t - s)
+
+    return rec_data
+
+def denoise(audio, infer):
+    ds = time()
     block_len = 512
     block_shift = 128
-    # load model
-
-    # load audio file at 16k fs (please change)
-    audio = y
 
     # preallocate output audio
     out_file = np.zeros((len(audio)))
@@ -57,10 +66,14 @@ def time_recording(rate, chunk, n_fft, infer):
         # write block to output file
         out_file[idx*block_shift:(idx*block_shift)+block_shift] = out_buffer[:block_shift]
 
-    rec_data = librosa.amplitude_to_db(np.abs(librosa.stft(y=np.abs(out_file),n_fft=n_fft)))
-    t = time()
-    print("record time :", t - s)
-    return rec_data
+    de = time()
+
+    print("denoise time :", de - ds)
+    
+    return out_file
+
+
+
 
 def save_data(record_data, i, path):
     s = time()
@@ -71,3 +84,6 @@ def save_data(record_data, i, path):
     df.to_parquet(file_path_name)
     t = time()
     print("save time :", t - s)
+
+
+# time_recording(16000,1024,512,None)

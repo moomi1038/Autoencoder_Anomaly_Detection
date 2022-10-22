@@ -4,6 +4,7 @@ DIR_NAME_MODEL: model/model_stft.hdf5
 DIR_NAME_RESULT: result
 DIR_NAME_TEST_STFT: tr/test_stft_parquet
 DIR_NAME_TRAIN_STFT: tr/train_stft_parquet
+DENOISE_MODEL: model/DTLN_norm_500h_saved_model
 EPOCHS: 100
 FRAMES: 1
 LIBROSA_N_FFT: 512

@@ -120,7 +120,7 @@ class real_time_record(QThread):
             temp = os.path.join(path, param["DIR_NAME_MODEL"])
             self.model = keras_module.load_model(temp)
 
-            temp = os.path.join(path, './model/dtln_saved_model')
+            temp = os.path.join(path, param["DENOISE_MODEL"])
             denoise_model = tf.saved_model.load(temp)
             self.infer = denoise_model.signatures["serving_default"]
             
@@ -176,7 +176,7 @@ class gui(QMainWindow, form_class):
             self.ax.set_xlabel("Time frame")
             self.ax.set_ylabel("Frequency")
             if data is not None:
-                librosa.display.specshow(data, sr=param["AUDIO_SAMPLERATE"],x_axis='time',y_axis = 'mel', ax = self.ax, cmap="coolwarm",clim=(0,100))
+                librosa.display.specshow(data, hop_length= param["LIBROSA_N_FFT"] // 4 ,sr=param["AUDIO_SAMPLERATE"],x_axis='time',y_axis = 'linear', ax = self.ax, cmap="coolwarm")
                 self.canvas.draw_idle()
                 self.canvas.flush_events()
                 
