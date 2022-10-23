@@ -163,7 +163,8 @@ class real_time_record(QThread):
                         if not result:
                             TOTAL_DATA["PATIENCE"] +=1
                             if TOTAL_DATA["PATIENCE"] >= param["PATIENCE"]:
-                                print("ERROR OCCUR")
+                                TOTAL_STATUS["NORMAL_STATUS"] = False
+                                serial_module.port_error_message(TOTAL_DATA["PLC_PORT"])
                         else:
                             TOTAL_DATA["PATIENCE"] = 0
 
@@ -206,6 +207,7 @@ class gui(QMainWindow, form_class):
         self.UIStyle()
         self.UIinit()
 
+        self.module_check()
         self.w = None
 
         self.fig = plt.Figure()
@@ -290,6 +292,8 @@ class gui(QMainWindow, form_class):
 
     def module_check(self):
         self.tabWidget.setCurrentIndex(0)
+        res, port = serial_module.port_init()
+        TOTAL_DATA["PLC_PORT"] = str(port)
 
     def train_check(self):
         self.tabWidget.setCurrentIndex(0)
