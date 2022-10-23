@@ -11,7 +11,7 @@ import sys
 import yaml
 import psutil
 import tensorflow as tf
-from time import time
+# from time import time
 import platform
 
 import module.record_module as record_module
@@ -135,8 +135,8 @@ class real_time_label(QThread):
 class real_time_record(QThread):
     send_data = pyqtSignal(object)
     history = None
-    y_true = []
-    y_pred = []
+    y_true = list()
+    y_pred = list()
     def __init__(self):
         super().__init__()
         try: 
@@ -190,8 +190,8 @@ class real_time_record(QThread):
                         if res_validation:
                             self.send_data.emit([data, history, y_true, y_pred])
                             history = None
-                            y_true = []
-                            y_pred = []
+                            y_true = list()
+                            y_pred = list()
                             TOTAL_STATUS["TRAIN_STATUS"] = False
                             TOTAL_STATUS["VALIDATION_STATUS"] = False
                             TOTAL_STATUS["TEST_STATUS"] = True
