@@ -256,22 +256,12 @@ QTabBar::tab:selected {
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,0,1">
+         <layout class="QHBoxLayout" name="horizontalLayout" stretch="8,1">
           <property name="sizeConstraint">
            <enum>QLayout::SetMaximumSize</enum>
           </property>
           <item>
            <layout class="QVBoxLayout" name="mat"/>
-          </item>
-          <item>
-           <widget class="QSlider" name="patience_slider">
-            <property name="maximum">
-             <number>100</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-           </widget>
           </item>
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,1,1,1,1,1,1,0,1">

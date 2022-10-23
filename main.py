@@ -69,8 +69,8 @@ class real_time_label(QThread):
                 self.parent.time_label.setText(QDate.currentDate().toString(Qt.DateFormat.ISODate))
                 self.parent.setting_threshold_tot_label.setText(str(param["THRESHOLD_STFT"]))
                 self.parent.setting_patience_label.setText(str(param["PATIENCE"]))
-                self.parent.patience_slider.setMaximum(param["PATIENCE"])
-                self.parent.patience_slider.setValue(TOTAL_DATA["PATIENCE"])
+                self.parent.progressBar.setMaximum(param["PATIENCE"])
+                self.parent.progressBar.setValue(TOTAL_DATA["PATIENCE"])
 
                 if TOTAL_STATUS["NORMAL_STATUS"] == True:
                     self.parent.abnormal_check_label.setText("이상감지 정상")
