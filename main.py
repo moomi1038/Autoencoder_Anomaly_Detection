@@ -10,7 +10,6 @@ import librosa.display
 import sys
 import yaml
 import psutil
-import platform
 import tensorflow as tf
 from time import sleep, time
 

@@ -30,7 +30,9 @@ def time_recording(rate, chunk, n_fft, infer):
 
     out_file = denoise(audio, infer)
 
-    rec_data = librosa.amplitude_to_db(np.abs(librosa.stft(y=np.abs(out_file),n_fft=n_fft)))
+    result = audio - out_file
+
+    rec_data = librosa.amplitude_to_db(np.abs(librosa.stft(y=np.abs(result),n_fft=n_fft)))
 
     t = time()
 
