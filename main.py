@@ -11,7 +11,7 @@ import sys
 import yaml
 import psutil
 import tensorflow as tf
-from time import sleep, time
+from time import time
 import platform
 
 import module.record_module as record_module
@@ -280,7 +280,7 @@ class gui(QMainWindow, form_class):
 
             with open(param_path, 'w') as file:
                 yaml.dump(param, file, default_flow_style=False)
-                
+
             TOTAL_STATUS["TEST_STATUS"] = True
         except Exception as e:
             print("patience_setting e : ", e)
