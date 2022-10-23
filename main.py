@@ -280,7 +280,8 @@ class gui(QMainWindow, form_class):
 
             with open(param_path, 'w') as file:
                 yaml.dump(param, file, default_flow_style=False)
-
+                
+            TOTAL_STATUS["TEST_STATUS"] = True
         except Exception as e:
             print("patience_setting e : ", e)
 
