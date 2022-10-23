@@ -74,7 +74,6 @@ def denoise(audio, infer):
     
     return out_file
 
-
 def save_data(record_data, i, path):
     s = time()
     head = [str(i) for i in range(record_data.shape[1])]
@@ -84,6 +83,3 @@ def save_data(record_data, i, path):
     df.to_parquet(file_path_name)
     t = time()
     print("save time :", t - s)
-
-
-# time_recording(16000,1024,512,None)

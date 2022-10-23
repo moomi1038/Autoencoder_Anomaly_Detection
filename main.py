@@ -122,7 +122,7 @@ class real_time_record(QThread):
             temp = os.path.join(path, param["DENOISE_MODEL"])
             denoise_model = tf.saved_model.load(temp)
             self.infer = denoise_model.signatures["serving_default"]
-            
+
         except Exception as e:
             print("Model load e : ", e)
 
@@ -131,7 +131,6 @@ class real_time_record(QThread):
             if TOTAL_STATUS["RECORD_STATUS"]:
                 try:
                     data = record_module.time_recording(param["AUDIO_SAMPLERATE"],param["PYAUDIO_CHUNK"],param["LIBROSA_N_FFT"], self.infer)
-                    
                     self.send_data.emit(data)
 
                     if TOTAL_STATUS["TEST_STATUS"]:
