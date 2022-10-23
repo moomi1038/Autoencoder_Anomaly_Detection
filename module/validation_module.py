@@ -53,4 +53,6 @@ def validation_run():
         except Exception as e:
             print(e)
 
-    utils.plotting(y_true,y_pred, "valid")
+    # utils.plotting(y_true,y_pred, "valid")
+
+    return True, y_true, y_pred

@@ -9,7 +9,7 @@ import os
 import pandas as pd
 
 def time_recording(rate, chunk, n_fft, infer):
-    s = time()
+    # s = time()
     frames = []
     audio = []
     data = np.array([])
@@ -32,16 +32,16 @@ def time_recording(rate, chunk, n_fft, infer):
 
     result = audio - out_file
 
-    rec_data = librosa.amplitude_to_db(np.abs(librosa.stft(y=np.abs(result),n_fft=n_fft)))
+    rec_data = librosa.amplitude_to_db(np.abs(librosa.stft(y=np.abs(result),n_fft=n_fft)),top_db=100)
 
-    t = time()
+    # t = time()
 
-    print("record time :", t - s)
+    # print("record time :", t - s)
 
     return rec_data
 
 def denoise(audio, infer):
-    ds = time()
+    # ds = time()
     block_len = 512
     block_shift = 128
 
@@ -68,18 +68,18 @@ def denoise(audio, infer):
         # write block to output file
         out_file[idx*block_shift:(idx*block_shift)+block_shift] = out_buffer[:block_shift]
 
-    de = time()
+    # de = time()
 
-    print("denoise time :", de - ds)
+    # print("denoise time :", de - ds)
     
     return out_file
 
 def save_data(record_data, i, path):
-    s = time()
+    # s = time()
     head = [str(i) for i in range(record_data.shape[1])]
     df = pd.DataFrame(record_data, columns= head)
     file_name = ''.join(["id01_",'{:0>5}'.format(i),"_.parquet"])
     file_path_name = os.path.join(path,file_name)
     df.to_parquet(file_path_name)
-    t = time()
-    print("save time :", t - s)
+    # t = time()
+    # print("save time :", t - s)

@@ -54,11 +54,6 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>48</pointsize>
-         </font>
-        </property>
         <property name="layoutDirection">
          <enum>Qt::LeftToRight</enum>
         </property>
@@ -94,10 +89,11 @@
         <property name="enabled">
          <bool>true</bool>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>48</pointsize>
-         </font>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
         <property name="layoutDirection">
          <enum>Qt::LeftToRight</enum>
@@ -195,13 +191,6 @@
         <width>1024</width>
         <height>550</height>
        </size>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>18</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-       </font>
       </property>
       <property name="autoFillBackground">
        <bool>false</bool>
@@ -348,13 +337,6 @@ QTabBar::tab:selected {
                 <height>128</height>
                </size>
               </property>
-              <property name="font">
-               <font>
-                <pointsize>18</pointsize>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
               <property name="styleSheet">
                <string notr="true">border-width: 2px; border-radius: 10px;
 background-color: rgb(5, 172, 230);
@@ -398,13 +380,6 @@ color: rgb(255, 255, 255);</string>
                 <height>128</height>
                </size>
               </property>
-              <property name="font">
-               <font>
-                <pointsize>18</pointsize>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
               <property name="styleSheet">
                <string notr="true">border-width: 2px; border-radius: 10px;
 background-color: rgb(5, 172, 230);
@@ -447,13 +422,6 @@ color: rgb(255, 255, 255);</string>
                 <width>186</width>
                 <height>128</height>
                </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>18</pointsize>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
               </property>
               <property name="styleSheet">
                <string notr="true">border-width: 2px; border-radius: 10px;
@@ -621,13 +589,6 @@ color: rgb(255, 255, 255);</string>
               <height>120</height>
              </size>
             </property>
-            <property name="font">
-             <font>
-              <pointsize>18</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
             <property name="styleSheet">
              <string notr="true">QPushButton {
 	background-color: rgb(183, 183, 183);
@@ -665,11 +626,6 @@ QPushButton:pressed {
               <height>120</height>
              </size>
             </property>
-            <property name="font">
-             <font>
-              <pointsize>18</pointsize>
-             </font>
-            </property>
             <property name="styleSheet">
              <string notr="true">QPushButton {
 	background-color: rgb(183, 183, 183);
@@ -700,13 +656,6 @@ QPushButton:pressed {
               <width>180</width>
               <height>120</height>
              </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>18</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
             </property>
             <property name="styleSheet">
              <string notr="true">QPushButton {
@@ -760,13 +709,6 @@ QPushButton:pressed {
               <width>180</width>
               <height>120</height>
              </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>18</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
             </property>
             <property name="styleSheet">
              <string notr="true">QPushButton {
@@ -852,7 +794,7 @@ QPushButton:pressed {
          </spacer>
         </item>
         <item row="1" column="1">
-         <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,1,0">
+         <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,1,1">
           <item>
            <widget class="QLabel" name="label">
             <property name="minimumSize">
@@ -860,13 +802,6 @@ QPushButton:pressed {
               <width>125</width>
               <height>70</height>
              </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>18</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
             </property>
             <property name="layoutDirection">
              <enum>Qt::LeftToRight</enum>
@@ -918,7 +853,7 @@ QPushButton:pressed {
            </widget>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0">
+           <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0">
             <property name="spacing">
              <number>2</number>
             </property>
@@ -948,11 +883,6 @@ QPushButton:pressed {
                 <height>20</height>
                </size>
               </property>
-              <property name="font">
-               <font>
-                <pointsize>14</pointsize>
-               </font>
-              </property>
               <property name="styleSheet">
                <string notr="true">color: rgb(0, 0, 0);</string>
               </property>
@@ -961,55 +891,6 @@ QPushButton:pressed {
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSlider" name="setting_threshold_slider">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>120</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="minimum">
-               <number>-20</number>
-              </property>
-              <property name="maximum">
-               <number>20</number>
-              </property>
-              <property name="pageStep">
-               <number>1</number>
-              </property>
-              <property name="tracking">
-               <bool>false</bool>
-              </property>
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="invertedAppearance">
-               <bool>false</bool>
-              </property>
-              <property name="invertedControls">
-               <bool>false</bool>
-              </property>
-              <property name="tickPosition">
-               <enum>QSlider::NoTicks</enum>
-              </property>
-              <property name="tickInterval">
-               <number>0</number>
               </property>
              </widget>
             </item>
@@ -1042,11 +923,6 @@ QPushButton:pressed {
               <width>125</width>
               <height>70</height>
              </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>18</pointsize>
-             </font>
             </property>
             <property name="layoutDirection">
              <enum>Qt::LeftToRight</enum>
@@ -1123,6 +999,18 @@ QPushButton:pressed {
                 <width>0</width>
                 <height>22</height>
                </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+	background-color: rgb(183, 183, 183);
+	color: rgb(255, 255, 255);
+	border-radius: 10px;
+}
+QPushButton:pressed {
+	background-color: rgb(5, 172, 230);
+	color: rgb(255, 255, 255);
+	border-radius: 10px;
+}</string>
               </property>
               <property name="text">
                <string>확인</string>
@@ -1229,13 +1117,6 @@ QPushButton:pressed {
               <height>70</height>
              </size>
             </property>
-            <property name="font">
-             <font>
-              <pointsize>18</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
             <property name="layoutDirection">
              <enum>Qt::LeftToRight</enum>
             </property>
@@ -1303,11 +1184,6 @@ QPushButton:pressed {
                   <height>20</height>
                  </size>
                 </property>
-                <property name="font">
-                 <font>
-                  <pointsize>14</pointsize>
-                 </font>
-                </property>
                 <property name="styleSheet">
                  <string notr="true">color: rgb(0, 0, 0);</string>
                 </property>
@@ -1326,11 +1202,6 @@ QPushButton:pressed {
                   <width>40</width>
                   <height>20</height>
                  </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>14</pointsize>
-                 </font>
                 </property>
                 <property name="text">
                  <string>분</string>
@@ -1451,11 +1322,6 @@ QPushButton:pressed {
               <height>70</height>
              </size>
             </property>
-            <property name="font">
-             <font>
-              <pointsize>18</pointsize>
-             </font>
-            </property>
             <property name="styleSheet">
              <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
@@ -1509,12 +1375,6 @@ QPushButton:pressed {
                   <height>20</height>
                  </size>
                 </property>
-                <property name="font">
-                 <font>
-                  <family>Agency FB</family>
-                  <pointsize>14</pointsize>
-                 </font>
-                </property>
                 <property name="styleSheet">
                  <string notr="true">color: rgb(0, 0, 0);</string>
                 </property>
@@ -1533,12 +1393,6 @@ QPushButton:pressed {
                   <width>40</width>
                   <height>20</height>
                  </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>Agency FB</family>
-                  <pointsize>14</pointsize>
-                 </font>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">color: rgb(0, 0, 0);</string>

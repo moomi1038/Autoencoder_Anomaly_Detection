@@ -44,5 +44,6 @@ def train():
     model_file_path = os.path.join(path, param["DIR_NAME_MODEL"])
     model.save(model_file_path)
 
-    utils.plotting(history.history['loss'], history.history['val_loss'], "train")
+    # utils.plotting(history.history['loss'], history.history['val_loss'], "train")
 
+    return True, history
