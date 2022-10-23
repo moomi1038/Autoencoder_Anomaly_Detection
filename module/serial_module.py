@@ -1,8 +1,6 @@
 import serial
 import serial.tools.list_ports as sp
 
-import platform
-
 connection_code = '\x0501RSS0106%MW003\x04'.encode()
 error_code = '\x0501WSS0106%MW0030001\x04'.encode()
 output = [False, None]

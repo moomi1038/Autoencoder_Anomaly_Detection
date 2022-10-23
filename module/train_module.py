@@ -4,7 +4,6 @@ from tqdm import tqdm
 import module.keras_model as keras_model
 import pandas as pd
 import yaml
-import module.utils as utils
 
 path = os.getcwd()
 param_path = os.path.join(path,"param.yaml")
@@ -43,7 +42,5 @@ def train():
 
     model_file_path = os.path.join(path, param["DIR_NAME_MODEL"])
     model.save(model_file_path)
-
-    # utils.plotting(history.history['loss'], history.history['val_loss'], "train")
 
     return True, history

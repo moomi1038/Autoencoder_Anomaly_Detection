@@ -1,9 +1,8 @@
 import os
 import glob
 import numpy as np
-from tqdm.auto import tqdm 
+# from tqdm.auto import tqdm 
 import module.keras_model as keras_model
-import module.utils as utils
 import yaml
 import pandas as pd
 
@@ -43,7 +42,7 @@ def validation_run():
 
     y_pred = [0. for k in test_files]
 
-    for file_idx, file_path in tqdm(enumerate(test_files), total=len(test_files)):
+    for file_idx, file_path in enumerate(test_files):
         try:
             data = pd.read_parquet(file_path).to_numpy().T
             errors = np.mean(np.square(data - model.predict(data)), axis=1)
@@ -53,6 +52,5 @@ def validation_run():
         except Exception as e:
             print(e)
 
-    # utils.plotting(y_true,y_pred, "valid")
 
     return True, y_true, y_pred
