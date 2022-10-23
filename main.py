@@ -241,7 +241,7 @@ class gui(QMainWindow, form_class):
                 
             # e = time()
             # print("graph_time  : ",e-s)
-            if TOTAL_STATUS["VALIDATION_STATUS"] == True:
+            if data[1] is not None:
                 _, history, y_true, y_pred = data
                 utils.plotting(history.history['loss'], history.history['val_loss'], "train")
                 utils.plotting(y_true,y_pred, "valid")
