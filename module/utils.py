@@ -3,13 +3,13 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix, auc, roc_curve, precision_recall_curve
 import seaborn as sns
 import os
-import yaml
+# import yaml
 
 path = os.getcwd()
-param_path = os.path.join(path,"param.yaml")
+# param_path = os.path.join(path,"param.yaml")
 
-with open(param_path) as f:
-    param = yaml.load(f, Loader=yaml.FullLoader)
+# with open(param_path) as f:
+#     param = yaml.load(f, Loader=yaml.FullLoader)
 
 def plotting(input1,input2,where):
     if where == "train":
@@ -82,8 +82,7 @@ def plotting(input1,input2,where):
         temp = os.path.join(path, "result", "roc.png")
         plt.savefig(temp)
 
-        param["THRESHOLD_STFT"] = round(threshold_fixed)
+        threshold = round(threshold_fixed)
 
-        with open('param.yaml', 'w') as file:
-            yaml.dump(param, file, default_flow_style=False)
+        return threshold
 

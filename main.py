@@ -246,7 +246,10 @@ class gui(QMainWindow, form_class):
             if data[1] is not None:
                 _, history, y_true, y_pred = data
                 utils.plotting(history.history['loss'], history.history['val_loss'], "train")
-                utils.plotting(y_true,y_pred, "valid")
+                th = utils.plotting(y_true,y_pred, "valid")
+                param["THRESHOLD_STFT"] = th
+                with open(param_path, 'w') as file:
+                    yaml.dump(param, file, default_flow_style=False)
 
         except Exception as e:
             print("graph e : ", e)
