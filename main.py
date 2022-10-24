@@ -183,10 +183,10 @@ class real_time_record(QThread):
 
                 if self.train_count >= TOTAL_DATA["TRAIN_TOTAL"]:
                     TOTAL_STATUS["RECORD_STATUS"] = False
-                    res_train, history = train_module.train()
+                    res_train, history = train_module.train(param["DIR_NAME_TRAIN_STFT"], param["DIR_NAME_TEST_STFT"], param["LOSS"], param["OPTIMIZER"], param["EPOCHS"], param["BATCH_SIZE"], param["SHUFFLE"], param["VALIDATION_SPLIT"], param["VERBOSE"], param["DIR_NAME_MODEL"])
                     if res_train:
                         TOTAL_STATUS["VALIDATION_STATUS"] = True
-                        res_validation, y_true, y_pred  = validation_module.validation_run() 
+                        res_validation, y_true, y_pred  = validation_module.validation_run(param["DIR_NAME_MODEL"], param["DIR_NAME_TRAIN_STFT"], param["DIR_NAME_TEST_STFT"]) 
                         if res_validation:
                             self.send_data.emit([data, history, y_true, y_pred])
                             history = None
