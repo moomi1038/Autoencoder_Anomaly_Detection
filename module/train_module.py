@@ -4,18 +4,15 @@ from tqdm import tqdm
 import module.keras_model as keras_model
 import pandas as pd
 # import yaml
+import sys
 
-path = os.getcwd()
-# param_path = os.path.join(path,"param.yaml")
-
-# with open(param_path) as f:
-#     param = yaml.load(f, Loader=yaml.FullLoader)
+try:
+    path = sys._MEIPASS
+except Exception:
+    path = os.path.abspath(".")
 
 def file_list_generator(id,ext, normal_dir, abnormal_dir):
-    # if id == "id01":
-    #     dir_name = os.path.join(path,param["DIR_NAME_TRAIN_STFT"])
-    # else:
-    #     dir_name = os.path.join(path,param["DIR_NAME_TEST_STFT"])
+    
     if id == "id01":
         dir_name = os.path.join(path,normal_dir)
     else:

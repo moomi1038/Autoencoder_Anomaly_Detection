@@ -1,16 +1,13 @@
 import os
 import glob
 import numpy as np
-# from tqdm.auto import tqdm 
 import module.keras_model as keras_model
-# import yaml
 import pandas as pd
-
-path = os.getcwd()
-# param_path = os.path.join(path,"param.yaml")
-
-# with open(param_path) as f:
-#     param = yaml.load(f, Loader=yaml.FullLoader)
+import sys
+try:
+    path = sys._MEIPASS
+except Exception:
+    path = os.path.abspath(".")
 
 def test_file_list_generator(normal_dir,abnormal_dir,
                              prefix_normal = "id01",
@@ -31,10 +28,6 @@ def test_file_list_generator(normal_dir,abnormal_dir,
     return files, labels
 
 def validation_run(model_path, normal_dir, abnormal_dir):
-
-    # model_file = os.path.join(path,param["DIR_NAME_MODEL"])
-    # normal_dir = os.path.join(path,param["DIR_NAME_TRAIN_STFT"])
-    # abnormal_dir = os.path.join(path,param["DIR_NAME_TEST_STFT"])
 
     model_file = os.path.join(path,model_path)
     normal_dir = os.path.join(path,normal_dir)

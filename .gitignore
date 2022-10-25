@@ -11,6 +11,8 @@ main.exe
 
 # Icon must end with two \r
 Icon
+build
+dist
 
 
 # Thumbnails

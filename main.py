@@ -1,16 +1,11 @@
 import sys
 import os
 
-if getattr(sys, 'frozen', False):
-    path = os.path.dirname(os.path.abspath(sys.executable))
-else:
-    path = os.path.dirname(os.path.abspath(__file__))
-print("BEFORE : ", path)
 try:
-    os.chdir(sys._MEIPASS)
-    print("MEIPASS : ",sys._MEIPASS)
-except:
-    os.chdir(path)
+    # PyInstaller에 의해 임시폴더에서 실행될 경우 임시폴더로 접근하는 함수
+    path = sys._MEIPASS
+except Exception:
+    path = os.path.abspath(".")
 
 from PyQt6 import uic
 from PyQt6.QtGui import QIcon, QPixmap
@@ -33,7 +28,7 @@ import module.serial_module as serial_module
 import module.keras_model as keras_module
 import module.utils as utils
 
-path = os.getcwd()
+# path = os.getcwd()
 param_path = os.path.join(path,"param.yaml")
 
 with open(param_path) as f:
@@ -64,7 +59,7 @@ TOTAL_STYLE = {
     "STYLE_ING_BLACK" : "border-width: 2px; border-radius: 10px; background-color: rgb(5, 172, 230); color: rgb(0, 0, 0);"
 }
 
-form_class = uic.loadUiType("main.ui")[0]
+form_class = uic.loadUiType(os.path.join(path,"main.ui"))[0]
 
 class AnotherWindow(QWidget):
     """
@@ -158,6 +153,12 @@ class real_time_record(QThread):
         except Exception as e:
             print("Model load e : ", e)
 
+        TOTAL_STATUS["TRAIN_STATUS"] = False
+        TOTAL_STATUS["VALIDATION_STATUS"] = False
+        TOTAL_STATUS["TEST_STATUS"] = True
+        TOTAL_STATUS["RECORD_STATUS"] = True
+        TOTAL_STATUS["NORMAL_STATUS"] = True
+
     def run(self):
         while True:
             if TOTAL_STATUS["RECORD_STATUS"]:
@@ -202,8 +203,8 @@ class real_time_record(QThread):
                             history = None
                             y_true = list()
                             y_pred = list()
-
-                            os.execl(sys.executable, sys.executable, *sys.argv)
+                            self.__init__()
+                            
 
 class gui(QMainWindow, form_class):
     def __init__(self):
@@ -331,10 +332,11 @@ class gui(QMainWindow, form_class):
 
     def UIStyle(self):
         #### ICON #####
-        self.tabWidget.setTabIcon(0,QIcon("./resource/pic_dashboard.png"))
-        self.tabWidget.setTabIcon(1,QIcon("./resource/pic_check.png"))
-        self.tabWidget.setTabIcon(2,QIcon("./resource/pic_setting.png"))
-        self.close_button.setIcon(QIcon("./resource/pic_close.png"))
+        temp = os.path.join(path, "resource")
+        self.tabWidget.setTabIcon(0,QIcon(os.path.join(temp, "pic_dashboard.png")))
+        self.tabWidget.setTabIcon(1,QIcon(os.path.join(temp, "pic_check.png")))
+        self.tabWidget.setTabIcon(2,QIcon(os.path.join(temp, "pic_setting.png")))
+        self.close_button.setIcon(QIcon(os.path.join(temp, "pic_close.png")))
 
         #### LABEL ####
         self.time_label.setText(TOTAL_DATA["NOW"].toString(Qt.DateFormat.ISODate))

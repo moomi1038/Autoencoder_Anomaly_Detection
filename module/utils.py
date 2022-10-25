@@ -4,8 +4,13 @@ from sklearn.metrics import confusion_matrix, auc, roc_curve, precision_recall_c
 import seaborn as sns
 import os
 # import yaml
+import sys
 
-path = os.getcwd()
+try:
+    # PyInstaller에 의해 임시폴더에서 실행될 경우 임시폴더로 접근하는 함수
+    path = sys._MEIPASS
+except Exception:
+    path = os.path.abspath(".")
 # param_path = os.path.join(path,"param.yaml")
 
 # with open(param_path) as f:
