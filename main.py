@@ -14,6 +14,17 @@ import tensorflow as tf
 # from time import time
 import platform
 
+if getattr(sys, 'frozen', False):
+    path = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    path = os.path.dirname(os.path.abspath(__file__))
+print("BEFORE : ", path)
+try:
+    os.chdir(sys._MEIPASS)
+    print("MEIPASS : ",sys._MEIPASS)
+except:
+    os.chdir(path)
+
 import module.record_module as record_module
 import module.train_module as train_module
 import module.test_module as test_module
