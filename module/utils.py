@@ -21,7 +21,8 @@ def plotting(input1,input2,where):
         plt.xlabel('Epoch'); plt.ylabel('loss')
         temp = os.path.join(path, "result", "loss.png")
         plt.savefig(temp)
-
+        plt.clf()
+        
     if where == "valid":
         y_true = input1
         y_pred = input2
@@ -32,6 +33,7 @@ def plotting(input1,input2,where):
         plt.legend()
         temp = os.path.join(path, "result", "precision_recall.png")
         plt.savefig(temp)
+        plt.clf()
 
         index_cnt = [cnt for cnt, (p, r) in enumerate(zip(precision_rt, recall_rt)) if p==r][0]
         print('precision: ',precision_rt[index_cnt],', recall: ',recall_rt[index_cnt])
@@ -56,6 +58,7 @@ def plotting(input1,input2,where):
         plt.xlabel("Data point index")
         temp = os.path.join(path, "result", "error_graph.png")
         plt.savefig(temp)
+        plt.clf()
 
         pred_y = [1 if e > threshold_fixed else 0 for e in error_df['Reconstruction_error'].values]
 
@@ -66,7 +69,7 @@ def plotting(input1,input2,where):
         plt.xlabel('Predicted Class'); plt.ylabel('True Class')
         temp = os.path.join(path, "result", "confusion.png")
         plt.savefig(temp)
-
+        plt.clf()
 
         false_pos_rate, true_pos_rate, _ = roc_curve(error_df['True_class'], error_df['Reconstruction_error'])
         roc_auc = auc(false_pos_rate, true_pos_rate,)
@@ -81,7 +84,8 @@ def plotting(input1,input2,where):
         plt.ylabel('True Positive Rate'); plt.xlabel('False Positive Rate')
         temp = os.path.join(path, "result", "roc.png")
         plt.savefig(temp)
-
+        plt.clf()
+        
         threshold = round(threshold_fixed)
 
         return threshold

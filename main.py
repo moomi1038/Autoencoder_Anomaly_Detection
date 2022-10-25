@@ -1,18 +1,5 @@
-import os
-from PyQt6 import uic
-from PyQt6.QtGui import QIcon, QPixmap
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel
-from PyQt6.QtCore import QDate, QThread, pyqtSignal,Qt
-from matplotlib import pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-import librosa
-import librosa.display
 import sys
-import yaml
-import psutil
-import tensorflow as tf
-# from time import time
-import platform
+import os
 
 if getattr(sys, 'frozen', False):
     path = os.path.dirname(os.path.abspath(sys.executable))
@@ -24,6 +11,19 @@ try:
     print("MEIPASS : ",sys._MEIPASS)
 except:
     os.chdir(path)
+
+from PyQt6 import uic
+from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel
+from PyQt6.QtCore import QDate, QThread, pyqtSignal,Qt
+from matplotlib import pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import librosa
+import librosa.display
+import yaml
+import psutil
+import time
+import platform
 
 import module.record_module as record_module
 import module.train_module as train_module
@@ -154,10 +154,6 @@ class real_time_record(QThread):
             temp = os.path.join(path, param["DIR_NAME_MODEL"])
             self.model = keras_module.load_model(temp)
 
-            temp = os.path.join(path, param["DENOISE_MODEL"])
-            denoise_model = tf.saved_model.load(temp)
-            self.infer = denoise_model.signatures["serving_default"]
-
             self.train_count = 0
         except Exception as e:
             print("Model load e : ", e)
@@ -166,7 +162,8 @@ class real_time_record(QThread):
         while True:
             if TOTAL_STATUS["RECORD_STATUS"]:
                 try:
-                    data = record_module.time_recording(param["AUDIO_SAMPLERATE"],param["PYAUDIO_CHUNK"],param["LIBROSA_N_FFT"], self.infer)
+                    start = time.time()
+                    data = record_module.time_recording(param["AUDIO_SAMPLERATE"],param["PYAUDIO_CHUNK"],param["LIBROSA_N_FFT"])
                     self.send_data.emit([data, self.history, self.y_true, self.y_pred])
 
                     if TOTAL_STATUS["TEST_STATUS"]:
@@ -182,7 +179,9 @@ class real_time_record(QThread):
                     else:
                         TOTAL_DATA["PATIENCE"] = 0
 
+                    end = time.time()
 
+                    print("RECORD_TOTAL_TIME = ", end-start)
                 except Exception as e:
                     print("record e : ", e)    
 
@@ -203,12 +202,8 @@ class real_time_record(QThread):
                             history = None
                             y_true = list()
                             y_pred = list()
-                            TOTAL_STATUS["TRAIN_STATUS"] = False
-                            TOTAL_STATUS["VALIDATION_STATUS"] = False
-                            TOTAL_STATUS["TEST_STATUS"] = True
-                            TOTAL_STATUS["RECORD_STATUS"] = True
 
-                    
+                            os.execl(sys.executable, sys.executable, *sys.argv)
 
 class gui(QMainWindow, form_class):
     def __init__(self):
@@ -243,7 +238,7 @@ class gui(QMainWindow, form_class):
 
     def graph(self, data):
         try:
-            # s = time()
+            # s = time.time()
             self.ax.cla()
             self.ax.set_xlabel("Time frame")
             self.ax.set_ylabel("Frequency")
@@ -252,7 +247,7 @@ class gui(QMainWindow, form_class):
                 self.canvas.draw_idle()
                 self.canvas.flush_events()
                 
-            # e = time()
+            # e = time.time()
             # print("graph_time  : ",e-s)
             if data[1] is not None:
                 _, history, y_true, y_pred = data
