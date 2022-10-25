@@ -2,13 +2,19 @@ import pyaudio
 import numpy as np
 import librosa
 import onnxruntime
-# from time import time
+import sys
 import os
 import pandas as pd
 
-path = os.getcwd()
-inter1_path = os.path.join(path, "model/model_1.onnx")
-inter2_path = os.path.join(path, "model/model_2.onnx")
+try:
+    path = sys._MEIPASS
+except Exception:
+    path = os.path.abspath(".")
+
+temp = os.path.join(path, "model")
+
+inter1_path = os.path.join(temp,"model_1.onnx")
+inter2_path = os.path.join(temp,"model_2.onnx")
 
 interpreter_1 = onnxruntime.InferenceSession(inter1_path)
 interpreter_2 = onnxruntime.InferenceSession(inter2_path)
@@ -51,7 +57,6 @@ def denoise(audio):
     # The sampling rate of 16k is also fix.
     block_len = 512
     block_shift = 128
-    # load models
     
     model_input_names_1 = [inp.name for inp in interpreter_1.get_inputs()]
     # preallocate input
