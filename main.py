@@ -163,7 +163,7 @@ class real_time_record(QThread):
         while True:
             if TOTAL_STATUS["RECORD_STATUS"]:
                 try:
-                    start = time.time()
+                    # start = time.time()
                     data = record_module.time_recording(param["AUDIO_SAMPLERATE"],param["PYAUDIO_CHUNK"],param["LIBROSA_N_FFT"])
                     self.send_data.emit([data, self.history, self.y_true, self.y_pred])
 
@@ -182,7 +182,7 @@ class real_time_record(QThread):
 
                     end = time.time()
 
-                    print("RECORD_TOTAL_TIME = ", end-start)
+                    # print("RECORD_TOTAL_TIME = ", end-start)
                 except Exception as e:
                     print("record e : ", e)    
 
