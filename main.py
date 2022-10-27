@@ -246,7 +246,6 @@ class gui(QMainWindow, form_class):
             if data[0] is not None:
                 librosa.display.specshow(data[0], hop_length= param["LIBROSA_N_FFT"] // 4 ,sr=param["AUDIO_SAMPLERATE"],x_axis='time',y_axis = 'linear', ax = self.ax, cmap="coolwarm")
                 self.canvas.draw_idle()
-                self.canvas.flush_events()
                 
             # e = time.time()
             # print("graph_time  : ",e-s)
