@@ -7,7 +7,7 @@ def test_run(data, model, threshold):
     final_data = data.T
     errors = np.mean(np.square(final_data - model.predict(final_data)), axis=1)
     reconstruction_error = np.round(np.mean(errors),2)
-
+    print("RECONSTRUCTION ERROR : ",reconstruction_error)
     # e = time()
     # print("test_time  : ",e-s)
 

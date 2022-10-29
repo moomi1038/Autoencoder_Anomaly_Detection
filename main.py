@@ -76,9 +76,8 @@ class AnotherWindow(QWidget):
             temp = os.path.join(result_path, value)
             label = QLabel(self)
             pixmap = QPixmap(temp)
-            label.setPixmap(pixmap.scaled(320,160))
+            label.setPixmap(pixmap.scaled(480,240))
             grid.addWidget(label, idx)
-        
 
 class real_time_label(QThread):
     send_data = pyqtSignal(object)
@@ -180,7 +179,7 @@ class real_time_record(QThread):
                     else:
                         TOTAL_DATA["PATIENCE"] = 0
 
-                    end = time.time()
+                    # end = time.time()
 
                     # print("RECORD_TOTAL_TIME = ", end-start)
                 except Exception as e:
