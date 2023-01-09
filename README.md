@@ -1,4 +1,4 @@
-# Make Sputter by Raspberrypi, PLC(DN32S) 
+# Autoencoder Anomaly Detection project
 
 ## 1. Outline
 
