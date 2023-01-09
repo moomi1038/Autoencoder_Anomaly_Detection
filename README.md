@@ -37,10 +37,15 @@ PyQt6, Pyaudio, Pyserial, Tensorflow, librosa, onnxruntime, parquet
 This project use Pyaudio to record the sound.
 
 parameter
+
 '''
+
 AUDIO_SAMPLERATE: 16000
+
 PYAUDIO_CHUNK: 1024
+
 LIBROSA_N_FFT: 512
+
 '''
 
 ### Autoencoder
@@ -54,14 +59,23 @@ Autoencoder is fit for find the feature of data and compare with new data.
 Autoencoder : https://en.wikipedia.org/wiki/Autoencoder
 
 parameter
+
 '''
+
 EPOCHS: 100
+
 LOSS: mean_squared_error
+
 OPTIMIZER: adam
+
 PATIENCE: 3
+
 SHUFFLE: true
+
 VALIDATION_SPLIT: 0.1
+
 BATCH_SIZE: 128
+
 '''
 
 ### Threshold
@@ -73,3 +87,7 @@ We use Threshold value is " 1 : 1 = precision : recall ".
 ### Denoise
 
 This project Denoise program from DTLN(https://github.com/breizhn/DTLN)
+
+### PLC
+
+Please check sputter (https://github.com/YEUNU/Sputter)
