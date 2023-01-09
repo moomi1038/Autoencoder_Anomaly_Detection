@@ -4,6 +4,7 @@
 
 Autoencoder Anomaly Detection project with Teraleader by 2022.03 ~ 2022.12.
 
+This project published in https://db.koreascholar.com/article.aspx?code=417571
 
 ## 2. Goal
 
@@ -23,25 +24,52 @@ CNC
 
 <img width="80%" src="https://user-images.githubusercontent.com/61678329/211233816-a6648730-58a6-41d2-ad4c-5414f8995575.png"/>
 
+<img width="80%" src="https://user-images.githubusercontent.com/61678329/211239914-f6d6e5b2-d52f-4363-8657-e804268926b1.png"/>
 
 ## 5. Explanation
 
 ### Used Library
 
-PyQt6, Pyserial, Tensorflow, librosa, onnxruntime, parquet
+PyQt6, Pyaudio, Pyserial, Tensorflow, librosa, onnxruntime, parquet
 
-### Signal Rules
+### Sound feature
 
-Digital Signal Rules
+This project use Pyaudio to record the sound.
 
-1. binary number -> hex number # fill 0 to make the number length is 4
-2. '\x0501WSS0106%PW012'+ number +'\x04'
+parameter
+'''
+AUDIO_SAMPLERATE: 16000
+PYAUDIO_CHUNK: 1024
+LIBROSA_N_FFT: 512
+'''
 
-Analog Signal Rules
+### Autoencoder
 
-1. number -> hex number # fill 0 to make the number length is 4
-2. '\x0501WSS0106%MW'+ address + number +'\x04'
+Project use Autoencoder because of the characteristic of Autoencoder.
 
-manual : https://www.ls-electric.com/ko/product/view/P01121
+key point of success of Ai program is find the feature of data.
 
+Autoencoder is fit for find the feature of data and compare with new data.
 
+Autoencoder : https://en.wikipedia.org/wiki/Autoencoder
+
+parameter
+'''
+EPOCHS: 100
+LOSS: mean_squared_error
+OPTIMIZER: adam
+PATIENCE: 3
+SHUFFLE: true
+VALIDATION_SPLIT: 0.1
+BATCH_SIZE: 128
+'''
+
+### Threshold
+
+<img width="80%" src="https://user-images.githubusercontent.com/61678329/211240078-43bce3a3-9c05-4d54-bb82-b30b3f859eaf.png"/>
+
+We use Threshold value is " 1 : 1 = precision : recall ".
+
+### Denoise
+
+This project Denoise program from DTLN(https://github.com/breizhn/DTLN)
