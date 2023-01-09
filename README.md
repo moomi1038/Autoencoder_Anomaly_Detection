@@ -58,6 +58,7 @@ Autoencoder is fit for find the feature of data and compare with new data.
 
 Autoencoder : https://en.wikipedia.org/wiki/Autoencoder
 
+
 parameter
 
 '''
@@ -77,6 +78,7 @@ VALIDATION_SPLIT: 0.1
 BATCH_SIZE: 128
 
 '''
+
 
 ### Threshold
 
