@@ -2,7 +2,7 @@
 
 ## 1. Outline
 
-Autoencoder Anomaly Detection project with Teraleader by 2022.03 ~ 2022.12.
+Autoencoder Anomaly Detection project with Teraleader by 2022.04 ~ 2022.11.
 
 This project published in https://db.koreascholar.com/article.aspx?code=417571
 
